@@ -1,0 +1,39 @@
+# Nixkell config
+
+# Warning: if you don't choose one from the currently available versions
+# https://github.com/NixOS/nixpkgs/tree/master/pkgs/development/compilers/ghc
+# you will most likely have to compile *everything* yourself.
+ghc = "9.2.4"
+
+# List of tools to be available in the nix shell.
+# Add or remove as you please.
+[env]
+# Put tools here that you want compiled with your GHC
+haskell_tools = [
+  "haskell-language-server",
+  "haskellPackages.hlint",
+  "haskellPackages.hpack_0_35_0",
+  "haskellPackages.ormolu_0_5_0_1",
+]
+
+tools = [
+  "alejandra",
+  "cabal-install",
+  "cabal2nix",
+  "niv",
+  "nodePackages.prettier",
+  "shellcheck",
+  "shfmt",
+  "treefmt",
+]
+
+# These files and directories will be excluded from the nix build.
+# This means there is no rebuild when changing these.
+[ignore]
+files = [
+  "README.md",
+]
+paths = [
+  ".github",
+  ".vscode",
+]

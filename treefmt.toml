@@ -1,0 +1,38 @@
+[formatter.haskell]
+command = "ormolu"
+options = [
+  "--mode", "inplace",
+  "--check-idempotence",
+]
+includes = ["*.hs"]
+
+[formatter.nix]
+command = "alejandra"
+includes = ["*.nix"]
+excludes = [
+  "nix/packages/*.nix",
+  "nix/sources.nix",
+]
+
+[formatter.shell]
+command = "shfmt"
+options = [
+    "--indent", "2",
+    "--simplify",
+    "--write",
+]
+includes = ["*.sh"]
+
+[formatter.prettier]
+command = "prettier"
+options = [
+  "--write"
+]
+includes = [
+    "*.json",
+    "*.md",
+    "*.yaml",
+]
+excludes = [
+  "nix/sources.json",
+]

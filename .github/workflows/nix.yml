@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request_target:
+  workflow_dispatch:
+
+jobs:
+  nix:
+    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macOS-latest
+        ghc:
+          - "9.2.4"
+
+    steps:
+      # https://github.com/dependabot/dependabot-core/issues/3253#issuecomment-799466911
+      - uses: actions/checkout@v3
+        if: ${{ github.event_name == 'pull_request_target' }}
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/checkout@v3
+        if: ${{ github.event_name != 'pull_request_target' }}
+
+      - name: Set $NIX_PATH and $TERM
+        id: nix-path
+        run: |
+          echo "NIX_PATH=$(jq -r .nixpkgs.url ./nix/sources.json)" >> $GITHUB_OUTPUT
+          echo "TERM=xterm" >> $GITHUB_ENV
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v18
+        with:
+          nix_path: nixpkgs=${{ steps.nix-path.outputs.NIX_PATH }}
+          extra_nix_config: |
+            log-lines = 1000
+
+      - name: Install Cachix
+        uses: cachix/cachix-action@v12
+        with:
+          name: pwm
+          signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
+
+      - name: Nix Shell
+        run: |
+          nix-shell --run "echo OK"
+
+      - name: Treefmt
+        run: |
+          nix-shell --run "hpack"
+          nix-shell --run "treefmt --no-cache --fail-on-change --config-file treefmt-ci.toml --tree-root ."
+
+      - name: Shellcheck
+        run: |
+          nix-shell --run "scripts/shellcheck.sh"
+
+      - name: Nix Build
+        run: |
+          nix-build ./nix/release.nix --argstr compiler ${{ matrix.ghc }}

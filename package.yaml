@@ -1,0 +1,128 @@
+name: aoc2022
+version: 0.1.0.0
+github: "pwm/aoc2022"
+author: "pwm"
+
+extra-source-files:
+  - README.md
+
+dependencies:
+  - base >= 4.7 && < 5
+  - bytestring
+  - containers
+  - cookie
+  - directory
+  - either
+  - filepath
+  - generic-lens
+  - hashable
+  - http-client
+  - http-types
+  - lens
+  - logict
+  - megaparsec
+  - mtl
+  - optparse-applicative
+  - parser-combinators
+  - pqueue
+  - pretty-simple
+  - primitive
+  - random
+  - req
+  - split
+  - text
+  - time
+  - transformers
+  - unordered-containers
+  - vector
+
+library:
+  source-dirs: src
+
+executables:
+  aoc:
+    source-dirs: bin
+    main: Run.hs
+    other-modules: []
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - aoc2022
+
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - hspec
+      - aoc2022
+
+default-extensions:
+  - BangPatterns
+  - BinaryLiterals
+  - BlockArguments
+  - ConstraintKinds
+  - DataKinds
+  - DefaultSignatures
+  - DeriveAnyClass
+  - DeriveDataTypeable
+  - DeriveFoldable
+  - DeriveFunctor
+  - DeriveGeneric
+  - DeriveTraversable
+  - DerivingStrategies
+  - DerivingVia
+  - DuplicateRecordFields
+  - EmptyCase
+  - FlexibleContexts
+  - FlexibleInstances
+  - FunctionalDependencies
+  - GeneralizedNewtypeDeriving
+  - ImportQualifiedPost
+  - InstanceSigs
+  - MultiParamTypeClasses
+  - MultiWayIf
+  - NamedFieldPuns
+  - NoFieldSelectors
+  - NoImplicitPrelude
+  - NoMonomorphismRestriction
+  - NumDecimals
+  - NumericUnderscores
+  - LambdaCase
+  - OverloadedLabels
+  - OverloadedRecordDot
+  - OverloadedStrings
+  - PatternSynonyms
+  - PolyKinds
+  - RankNTypes
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - StrictData
+  - TupleSections
+  - TypeApplications
+  - TypeOperators
+  - ViewPatterns
+
+ghc-options:
+  - -Weverything
+  - -Wno-missing-exported-signatures # missing-exported-signatures turns off the more strict -Wmissing-signatures.
+  - -Wno-missing-import-lists # Requires explicit imports of _every_ function (e.g. ‘$’); too strict
+  - -Wno-missed-specialisations # When GHC can’t specialize a polymorphic function.
+  - -Wno-all-missed-specialisations # See missed-specialisations
+  - -Wno-unsafe # Don’t use Safe Haskell warnings
+  - -Wno-safe # Don’t use Safe Haskell warnings
+  - -Wno-missing-local-signatures # Warning for polymorphic local bindings; nothing wrong with those.
+  - -Wno-monomorphism-restriction # Don’t warn if the monomorphism restriction is used
+  - -Wno-missing-export-lists # Don't warn if export list is missing
+  - -Wno-missing-home-modules # Don't warn in GHCi when loading modules (this is a bogus warning)
+  - -Wno-missing-safe-haskell-mode
+  - -Wno-prepositive-qualified-module
+  - -Wno-unused-packages
+  - -Wno-implicit-prelude
+  - -Wno-missing-kind-signatures

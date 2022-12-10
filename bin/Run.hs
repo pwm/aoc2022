@@ -1,7 +1,7 @@
 module Main (main) where
 
 import AoC (aoc)
-import AoC.Prelude (IO)
+import Prelude (IO)
 
 main :: IO ()
 main = aoc

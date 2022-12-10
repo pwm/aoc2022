@@ -1,6 +1,6 @@
 module AoC.Puzzles.Y2022D01 where
 
-import AoC.Prelude
+import AoC.Lib.Prelude
 
 parse :: String -> Maybe [[Int]]
 parse = stringBlocksToInts

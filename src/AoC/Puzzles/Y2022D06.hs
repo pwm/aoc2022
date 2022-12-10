@@ -1,6 +1,6 @@
 module AoC.Puzzles.Y2022D06 where
 
-import AoC.Prelude
+import AoC.Lib.Prelude
 import Control.Monad.State.Strict
 
 parse :: String -> Maybe String

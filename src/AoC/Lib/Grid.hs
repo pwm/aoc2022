@@ -1,6 +1,6 @@
 module AoC.Lib.Grid where
 
-import AoC.Prelude
+import AoC.Lib.Prelude
 import Control.Monad.State.Strict
 import Data.Map.Strict ((!))
 import Data.Map.Strict qualified as Map
@@ -72,6 +72,15 @@ n9 = [stepN, stepNE, stepE, stepSE, stepM, stepS, stepSW, stepW, stepNW]
 (<+>) :: Pos -> Pos -> Pos
 (x1, y1) <+> (x2, y2) = (x1 + x2, y1 + y2)
 
+(<->) :: Pos -> Pos -> Pos
+(x1, y1) <-> (x2, y2) = (x1 - x2, y1 - y2)
+
+dist :: Pos -> Pos -> Pos
+dist (x1, y1) (x2, y2) = (abs (x1 - x2), abs (y1 - y2))
+
+manhattan :: Pos -> Pos -> Int
+manhattan x y = uncurry (+) (dist x y)
+
 adj4, adj8, adj9 :: Pos -> [Pos]
 adj4 p = (p <+>) <$> n4
 adj8 p = (p <+>) <$> n8
@@ -112,9 +121,6 @@ mkRect ln hn lm hm = (,) <$> [ln .. hn] <*> [lm .. hm]
 
 mkSquare :: Int -> [Pos]
 mkSquare n = mkRect 0 (n - 1) 0 (n - 1)
-
-manhattan :: Pos -> Pos -> Int
-manhattan (x1, y1) (x2, y2) = abs (x1 - x2) + abs (y1 - y2)
 
 --
 

@@ -22,7 +22,7 @@ src_content=$(
   cat <<-EOF
 module AoC.Puzzles.Y${year}D${day} where
 
-import AoC.Prelude
+import AoC.Lib.Prelude
 
 parse :: String -> Maybe ()
 parse _ = Just ()

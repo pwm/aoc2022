@@ -3,7 +3,7 @@ module AoC (aoc) where
 import AoC.Core.ArgParser
 import AoC.Core.Fetcher
 import AoC.Core.Solver
-import AoC.Prelude
+import AoC.Lib.Prelude
 import AoC.Puzzles.Y2022D01 qualified as Y2022D01
 import AoC.Puzzles.Y2022D02 qualified as Y2022D02
 import AoC.Puzzles.Y2022D03 qualified as Y2022D03

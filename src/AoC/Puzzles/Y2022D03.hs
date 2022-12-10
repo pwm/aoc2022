@@ -1,6 +1,6 @@
 module AoC.Puzzles.Y2022D03 where
 
-import AoC.Prelude
+import AoC.Lib.Prelude
 import Data.Map.Strict qualified as Map
 
 parse :: String -> Maybe [String]

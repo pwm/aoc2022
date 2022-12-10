@@ -27,7 +27,7 @@ module AoC.Lib.Parser
   )
 where
 
-import AoC.Prelude hiding (some)
+import AoC.Lib.Prelude hiding (some)
 import Text.Megaparsec as X hiding (Pos, State (..), parse)
 import Text.Megaparsec.Char as X
 import Text.Megaparsec.Char.Lexer qualified as Lexer

@@ -1,6 +1,6 @@
 module AoC.Puzzles.Y2022D02 where
 
-import AoC.Prelude
+import AoC.Lib.Prelude
 
 parse :: String -> Maybe [(Elf, Me)]
 parse = traverse (bitraverse parseElf parseMe <=< l2p . splitOn " ") . lines

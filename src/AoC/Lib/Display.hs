@@ -1,7 +1,7 @@
 module AoC.Lib.Display where
 
 import AoC.Lib.Grid
-import AoC.Prelude
+import AoC.Lib.Prelude
 import Data.Map.Strict qualified as Map
 import System.IO qualified as SIO
 

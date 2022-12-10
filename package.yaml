@@ -8,9 +8,11 @@ extra-source-files:
 
 dependencies:
   - base >= 4.7 && < 5
+  - advent-of-code-ocr
   - bytestring
   - containers
   - cookie
+  - data-fix
   - directory
   - either
   - filepath
@@ -22,6 +24,7 @@ dependencies:
   - logict
   - megaparsec
   - mtl
+  - neat-interpolation
   - optparse-applicative
   - parser-combinators
   - pqueue
@@ -100,6 +103,7 @@ default-extensions:
   - OverloadedStrings
   - PatternSynonyms
   - PolyKinds
+  - QuasiQuotes
   - RankNTypes
   - ScopedTypeVariables
   - StandaloneDeriving

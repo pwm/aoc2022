@@ -2,8 +2,9 @@ module AoC.Tester where
 
 import AoC.Core.Date (Date)
 import AoC.Core.File
-import AoC.Prelude
+import Data.Maybe (isJust)
 import Test.Hspec
+import Prelude
 
 tester ::
   (Show a, Show b, Show c, Eq b, Eq c) =>

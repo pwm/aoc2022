@@ -1,6 +1,6 @@
 module AoC.Puzzles.Y2022D04 where
 
-import AoC.Prelude
+import AoC.Lib.Prelude
 
 parse :: String -> Maybe [((Int, Int), (Int, Int))]
 parse = traverse (bitraverse toPair toPair <=< toPairs) . lines

@@ -1,6 +1,6 @@
 module AoC.Lib.Graph where
 
-import AoC.Prelude
+import AoC.Lib.Prelude
 import Data.PQueue.Prio.Min (MinPQueue)
 import Data.PQueue.Prio.Min qualified as MinPQueue
 import Data.Sequence (Seq (..), (><))

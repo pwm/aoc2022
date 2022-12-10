@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -Wno-compat-unqualified-imports #-}
 
-module AoC.Prelude
+module AoC.Lib.Prelude
   ( module X,
     module List,
     module Map,
@@ -20,6 +20,7 @@ module AoC.Prelude
     intToDigits,
     digitsToInt,
     pp,
+    pps,
     pad,
     rpad,
     withIO,
@@ -47,6 +48,7 @@ module AoC.Prelude
     compose,
     composeM,
     times,
+    timesAcc,
     timesL,
     timesM,
     substring,
@@ -59,10 +61,11 @@ module AoC.Prelude
   )
 where
 
+import Advent.OCR as X
 import AoC.Core.Date
 import AoC.Core.File
-import Control.Applicative as X (Alternative (..), liftA2)
-import Control.Lens as X (Each (..), element, filtered, filteredBy, folded, maximumByOf, maximumOf, minimumByOf, minimumOf, over, preview, review, set, sumOf, toListOf, use, uses, view, (%=), (%~), (*~), (+~), (.=), (.~), (^.), (^..), (^?), _1, _2, _3, _4, _5, _Just, _Nothing)
+import Control.Applicative as X (Alternative (..), liftA2, liftA3)
+import Control.Lens as X (Each (..), element, filtered, filteredBy, folded, maximumByOf, maximumOf, minimumByOf, minimumOf, over, preview, review, set, sumOf, toListOf, use, uses, view, (%=), (%~), (*~), (+=), (+~), (.=), (.~), (^.), (^..), (^?), _1, _2, _3, _4, _5, _Just, _Nothing)
 import Control.Monad as X (foldM, guard, when, (<=<), (>=>))
 import Data.Bifunctor as X
 import Data.Bitraversable as X
@@ -77,20 +80,23 @@ import Data.List as List
 import Data.List.Split as X
 import Data.Map.Strict as Map (Map, (!?))
 import Data.Map.Strict qualified as Map
-import Data.Maybe as X hiding (fromJust)
+import Data.Maybe as X
 import Data.Ord as X (Down (..), comparing)
 import Data.Sequence as Seq (Seq)
 import Data.Set as Set (Set)
 import Data.Set qualified as Set
-import Data.Text as T (Text)
+import Data.Text as T (Text, unpack)
+import Data.Text.Lazy as TL (unpack)
 import Data.Time.Calendar
 import Data.Time.Clock
 import Data.Tuple as X
 import Data.Void as X (Void)
+import Debug.Trace as X
 import GHC.Generics as X (Generic)
+import NeatInterpolation as X hiding (text)
 import System.IO as X (stdin)
 import System.IO.Unsafe (unsafePerformIO)
-import Text.Pretty.Simple (CheckColorTty (..), OutputOptions (..), StringOutputStyle (..), pPrintOpt)
+import Text.Pretty.Simple (CheckColorTty (..), OutputOptions (..), StringOutputStyle (..), pPrintOpt, pShowOpt)
 import Text.Read (readMaybe)
 import Prelude as X
 
@@ -160,19 +166,22 @@ digitsToInt :: [Int] -> Maybe Int
 digitsToInt = fmap fromIntegral . digitsToInteger
 
 pp :: (Show a) => a -> IO ()
-pp =
-  pPrintOpt
-    NoCheckColorTty
-    ( OutputOptions
-        { outputOptionsIndentAmount = 2,
-          outputOptionsPageWidth = 120,
-          outputOptionsCompact = True,
-          outputOptionsCompactParens = True,
-          outputOptionsInitialIndent = 0,
-          outputOptionsColorOptions = Nothing,
-          outputOptionsStringStyle = EscapeNonPrintable
-        }
-    )
+pp = pPrintOpt NoCheckColorTty outOpts
+
+pps :: (Show a) => a -> String
+pps = TL.unpack . pShowOpt outOpts
+
+outOpts :: OutputOptions
+outOpts =
+  OutputOptions
+    { outputOptionsIndentAmount = 2,
+      outputOptionsPageWidth = 120,
+      outputOptionsCompact = True,
+      outputOptionsCompactParens = True,
+      outputOptionsInitialIndent = 0,
+      outputOptionsColorOptions = Nothing,
+      outputOptionsStringStyle = EscapeNonPrintable
+    }
 
 pad :: Int -> String -> String
 pad n s
@@ -189,9 +198,7 @@ withIO a b = let !_ = unsafePerformIO a in b
 
 -- strict
 fixpoint :: (Eq a) => (a -> a) -> a -> a
-fixpoint f x =
-  let y = f x
-   in if y `seq` x == y then y else fixpoint f y
+fixpoint f x | y <- f x = if y `seq` x == y then y else fixpoint f y
 
 -- lazy
 fixpointL :: (Eq a) => (a -> a) -> a -> a
@@ -211,6 +218,9 @@ composeM = foldr (<=<) pure
 -- strict
 times :: Int -> (b -> b) -> b -> b
 times n f s = foldl' (\x _ -> f x) s (replicate n ())
+
+timesAcc :: Int -> (b -> b) -> b -> [b]
+timesAcc n f s = scanl' (\x _ -> f x) s (replicate n ())
 
 -- lazy
 timesL :: Int -> (b -> b) -> b -> b

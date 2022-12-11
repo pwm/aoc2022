@@ -22,6 +22,8 @@ scripts/solve.sh 01 # specific day
 scripts/solve.sh 2022 01 # specific date
 ```
 
+Note: `optimization` in `cabal.project` is set to 0 for fast dev UX. Setting it to 1 can significantly speed up solvers.
+
 ## Test
 
 ```

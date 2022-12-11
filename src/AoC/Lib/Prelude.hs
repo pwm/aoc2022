@@ -175,7 +175,7 @@ outOpts :: OutputOptions
 outOpts =
   OutputOptions
     { outputOptionsIndentAmount = 2,
-      outputOptionsPageWidth = 120,
+      outputOptionsPageWidth = 40,
       outputOptionsCompact = True,
       outputOptionsCompactParens = True,
       outputOptionsInitialIndent = 0,

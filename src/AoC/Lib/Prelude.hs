@@ -69,6 +69,7 @@ import Control.Lens as X (Each (..), element, filtered, filteredBy, folded, maxi
 import Control.Monad as X (foldM, guard, when, (<=<), (>=>))
 import Data.Bifunctor as X
 import Data.Bitraversable as X
+import Data.Char as X (chr, ord)
 import Data.Containers.ListUtils as X
 import Data.Either as X
 import Data.Foldable as X (Foldable (..), asum, traverse_)

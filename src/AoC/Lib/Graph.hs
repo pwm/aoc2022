@@ -7,40 +7,53 @@ import Data.Sequence (Seq (..), (><))
 import Data.Sequence qualified as Seq
 import Data.Set qualified as Set
 
-dfs :: forall n. (Ord n) => (n -> [n]) -> (n -> Bool) -> n -> [n]
-dfs nexts isDest start = go Set.empty [start]
-  where
-    go :: Set n -> [n] -> [n]
-    go _ [] = []
-    go seen (x : xs)
-      | isDest x = [x]
-      | Set.member x seen = go seen xs
-      | otherwise = x : go (Set.insert x seen) (nexts x <> xs)
+dfs :: Ord n => (n -> [n]) -> (n -> Bool) -> n -> [n]
+dfs = dfsOn id
 
-bfs :: forall n. (Ord n) => (n -> [n]) -> (n -> Bool) -> n -> [n]
-bfs nexts isDest start = go Set.empty (Seq.fromList [start])
+dfsOn :: forall n r. (Ord r) => (n -> r) -> (n -> [n]) -> (n -> Bool) -> n -> [n]
+dfsOn project nexts isDest start = go Set.empty [start]
   where
-    go :: Set n -> Seq n -> [n]
+    go :: Set r -> [n] -> [n]
+    go _ [] = []
+    go seen (node : nodes)
+      | isDest node = [node]
+      | Set.member (project node) seen = go seen nodes
+      | otherwise = node : go (Set.insert (project node) seen) (nexts node <> nodes)
+
+bfs :: Ord n => (n -> [n]) -> (n -> Bool) -> n -> [n]
+bfs = bfsOn id
+
+bfsOn :: forall n r. (Ord r) => (n -> r) -> (n -> [n]) -> (n -> Bool) -> n -> [n]
+bfsOn project nexts isDest start = go Set.empty (Seq.fromList [start])
+  where
+    go :: Set r -> Seq n -> [n]
     go _ Seq.Empty = []
-    go seen (x :<| xs)
-      | isDest x = [x]
-      | Set.member x seen = go seen xs
-      | otherwise = x : go (Set.insert x seen) (xs >< Seq.fromList (nexts x))
+    go seen (node :<| nodes)
+      | isDest node = [node]
+      | Set.member (project node) seen = go seen nodes
+      | otherwise = node : go (Set.insert (project node) seen) (nodes >< Seq.fromList (nexts node))
 
 dijkstra :: (Ord n) => (n -> [(n, Int)]) -> (n -> Bool) -> n -> [(n, Int)]
-dijkstra f =
-  let noHeur (n, c) = (n, c, 0)
-   in astar (map noHeur . f)
+dijkstra = dijkstraOn id
 
-astar :: forall n. (Ord n) => (n -> [(n, Int, Int)]) -> (n -> Bool) -> n -> [(n, Int)]
-astar nexts isDest start = go Set.empty (MinPQueue.singleton 0 start)
+dijkstraOn :: (Ord r) => (n -> r) -> (n -> [(n, Int)]) -> (n -> Bool) -> n -> [(n, Int)]
+dijkstraOn project nexts =
+  let noHeur (node, cost) = (node, cost, 0)
+   in astarOn project (map noHeur . nexts)
+
+astar :: Ord n => (n -> [(n, Int, Int)]) -> (n -> Bool) -> n -> [(n, Int)]
+astar = astarOn id
+
+astarOn :: forall n r. (Ord r) => (n -> r) -> (n -> [(n, Int, Int)]) -> (n -> Bool) -> n -> [(n, Int)]
+astarOn project nexts isDest start = go Set.empty (MinPQueue.singleton 0 start)
   where
-    go :: Set n -> MinPQueue Int n -> [(n, Int)]
+    go :: Set r -> MinPQueue Int n -> [(n, Int)]
     go seen unseen = case MinPQueue.minViewWithKey unseen of
       Nothing -> []
       Just ((cost, node), unseen')
         | isDest node -> [(node, cost)]
-        | Set.member node seen -> go seen unseen'
+        | Set.member (project node) seen -> go seen unseen'
         | otherwise ->
-            let f q (node', cost', heur) = MinPQueue.insert (cost + cost' + heur) node' q
-             in (node, cost) : go (Set.insert node seen) (foldl' f unseen' (nexts node))
+            let f :: MinPQueue Int a -> (a, Int, Int) -> MinPQueue Int a
+                f q (node', cost', heur) = MinPQueue.insert (cost + cost' + heur) node' q
+             in (node, cost) : go (Set.insert (project node) seen) (foldl' f unseen' (nexts node))

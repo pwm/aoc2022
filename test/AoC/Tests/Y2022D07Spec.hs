@@ -10,5 +10,5 @@ spec =
   tester
     (mkDate 2022 07)
     parse
-    (solveA, ())
-    (solveB, ())
+    (solveA, 1_723_892)
+    (solveB, 8_474_158)

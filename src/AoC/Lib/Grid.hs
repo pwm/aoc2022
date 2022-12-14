@@ -127,9 +127,9 @@ mkSquare n = mkRect 0 (n - 1) 0 (n - 1)
 listToGrid :: [[a]] -> GridOf a
 listToGrid =
   Map.fromList
-    . concatMap (\(x, l) -> fmap (first (x,)) l)
+    . concatMap (\(x, l) -> map (first (x,)) l)
     . zip [0 ..]
-    . fmap (zip [0 ..])
+    . map (zip [0 ..])
 
 parseGrid ::
   forall a.
@@ -139,7 +139,7 @@ parseGrid ::
 parseGrid parseCell =
   fmap listToGrid . traverse (traverse parseCell) . lines
 
-printGrid :: forall a. (a -> Char) -> GridOf a -> String
+printGrid :: forall a. (a -> String) -> GridOf a -> String
 printGrid draw m0 = evalState (foldM go "" l0) (fst $ fst $ head l0)
   where
     l0 = Map.toAscList m0
@@ -147,10 +147,10 @@ printGrid draw m0 = evalState (foldM go "" l0) (fst $ fst $ head l0)
     go m ((x, _), b) = do
       c <- get
       if c == x
-        then pure (m <> [draw b])
-        else put (c + 1) >> pure (m <> "\n" <> [draw b])
+        then pure (m <> draw b)
+        else put (c + 1) >> pure (m <> "\n" <> draw b)
 
-roundTripGrid :: (Char -> Maybe a) -> (a -> Char) -> String -> Bool
+roundTripGrid :: (Char -> Maybe a) -> (a -> String) -> String -> Bool
 roundTripGrid parseCell printCell s =
   (printGrid printCell <$> parseGrid parseCell s) == Just s
 

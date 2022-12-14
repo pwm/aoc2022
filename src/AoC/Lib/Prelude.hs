@@ -231,8 +231,7 @@ timesM :: (Monad m) => Int -> (b -> m b) -> b -> m b
 timesM n = composeM . replicate n
 
 loopTill :: (a -> Bool) -> (a -> a) -> a -> a
-loopTill p step x =
-  if p x then x else loopTill p step (step x)
+loopTill p step x = if p x then x else loopTill p step (step x)
 
 loopTillM :: (Monad m) => (a -> m Bool) -> (a -> m a) -> a -> m a
 loopTillM p step x = do

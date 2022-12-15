@@ -101,16 +101,16 @@ import Text.Pretty.Simple (CheckColorTty (..), OutputOptions (..), StringOutputS
 import Text.Read (readMaybe)
 import Prelude as X
 
-getDate :: IO Date
-getDate = do
-  x <- getCurrentTime
-  let (y, _, d) = toGregorian $ utctDay x
-  case mkDate (fromIntegral y) d of
-    (Right date) -> pure date
-    _ -> error "Not a valid date"
-
 load :: IO String
 load = getDate >>= readInput
+  where
+    getDate :: IO Date
+    getDate = do
+      x <- getCurrentTime
+      let (y, _, d) = toGregorian $ utctDay x
+      case mkDate (fromIntegral y) d of
+        (Right date) -> pure date
+        _ -> error "Not a valid date"
 
 loadDate :: Int -> Int -> IO String
 loadDate y d = case mkDate y d of
@@ -136,9 +136,9 @@ stringToIntsSepBy sep = traverse stringToInt . splitOn sep
 
 -- "123456" -> Just [1, 2, 3, 4, 5, 6]
 stringToDigits :: String -> Maybe [Int]
-stringToDigits s = if length xs == length s then Just xs else Nothing
-  where
-    xs = concatMap (fmap fst . (\c -> reads @Int [c])) s
+stringToDigits s =
+  let xs = concatMap (map fst . (\c -> reads @Int [c])) s
+   in if length xs == length s then Just xs else Nothing
 
 -- '1' -> Just 1
 charToDigit :: Char -> Maybe Int
@@ -146,19 +146,21 @@ charToDigit c = case reads @Int [c] of
   [(n, "")] -> Just n
   _ -> Nothing
 
--- (-123456) -> [1, 2, 3, 4, 5, 6]
 -- 0 -> [0]
+-- (-123456) -> [1, 2, 3, 4, 5, 6]
 integerToDigits :: Integer -> [Int]
-integerToDigits i = if i == 0 then [0] else reverse $ unfoldr go (abs i)
+integerToDigits 0 = [0]
+integerToDigits i = reverse $ unfoldr go (abs i)
   where
     go :: Integer -> Maybe (Int, Integer)
-    go n = if n == 0 then Nothing else Just (fromInteger @Int (n `mod` 10), n `div` 10)
+    go 0 = Nothing
+    go n = Just (fromInteger @Int (n `mod` 10), n `div` 10)
 
 -- [1, 2, 3, 4, 5, 6] -> Just 123456
 -- [] -> Nothing
 digitsToInteger :: [Int] -> Maybe Integer
 digitsToInteger [] = Nothing
-digitsToInteger xs = Just $ foldl (\i d -> i * 10 + toInteger d) 0 xs
+digitsToInteger xs = Just $ foldl' (\i d -> i * 10 + toInteger d) 0 xs
 
 intToDigits :: Int -> [Int]
 intToDigits = integerToDigits . fromIntegral
@@ -290,7 +292,7 @@ tupleProduct = product . t2l
 pick :: Int -> [a] -> [[a]]
 pick 0 _ = [[]]
 pick _ [] = []
-pick k (x : xs) = fmap (x :) (pick (k - 1) xs) <> pick k xs
+pick k (x : xs) = map (x :) (pick (k - 1) xs) <> pick k xs
 
 slicesOf :: Int -> [a] -> [[a]]
 slicesOf n = unfoldr $ \xs ->
@@ -301,18 +303,18 @@ lookups :: (Ord k) => Map k v -> [k] -> [v]
 lookups m = mapMaybe (m !?)
 
 substring :: Int -> Int -> String -> String
-substring start end text = take (end - start) (drop start text)
+substring start end = take (end - start) . drop start
 
 binToDec :: [Bool] -> Integer
 binToDec = foldl' (\acc x -> 2 * acc + toInteger (fromEnum x)) 0
 
 decToBin :: Integer -> [Bool]
 decToBin 0 = [False]
-decToBin n = (== 1) <$> go n []
-  where
-    go :: Integer -> [Integer] -> [Integer]
-    go 0 r = r
-    go k rs = go (k `div` 2) (k `mod` 2 : rs)
+decToBin n =
+  let go :: Integer -> [Integer] -> [Integer]
+      go 0 r = r
+      go k rs = go (k `div` 2) (k `mod` 2 : rs)
+   in map (== 1) (go n [])
 
 sqrtInt :: Int -> Int
 sqrtInt = floor @Double . sqrt . fromIntegral

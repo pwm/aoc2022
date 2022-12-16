@@ -20,6 +20,7 @@ module AoC.Lib.Prelude
     intToDigits,
     digitsToInt,
     pp,
+    ppw,
     pps,
     pad,
     rpad,
@@ -171,6 +172,9 @@ digitsToInt = fmap fromIntegral . digitsToInteger
 pp :: (Show a) => a -> IO ()
 pp = pPrintOpt NoCheckColorTty outOpts
 
+ppw :: (Show a) => Int -> a -> IO ()
+ppw width = pPrintOpt NoCheckColorTty (outOpts & #outputOptionsPageWidth .~ width)
+
 pps :: (Show a) => a -> String
 pps = TL.unpack . pShowOpt outOpts
 
@@ -178,7 +182,7 @@ outOpts :: OutputOptions
 outOpts =
   OutputOptions
     { outputOptionsIndentAmount = 2,
-      outputOptionsPageWidth = 40,
+      outputOptionsPageWidth = 80,
       outputOptionsCompact = True,
       outputOptionsCompactParens = True,
       outputOptionsInitialIndent = 0,

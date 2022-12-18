@@ -116,11 +116,12 @@ lookupNs8 p m = lookups m (adj8 p)
 lookupNs9 :: Pos -> GridOf a -> [a]
 lookupNs9 p m = lookups m (adj9 p)
 
-mkRect :: Int -> Int -> Int -> Int -> [Pos]
-mkRect ln hn lm hm = (,) <$> [ln .. hn] <*> [lm .. hm]
+mkRect :: Pos -> Pos -> [Pos]
+mkRect (upLeftX, upLeftY) (downRightX, downRightY) =
+  liftA2 (,) [upLeftX .. downRightX] [upLeftY .. downRightY]
 
 mkSquare :: Int -> [Pos]
-mkSquare n = mkRect 0 (n - 1) 0 (n - 1)
+mkSquare n = mkRect (0, 0) (n - 1, n - 1)
 
 --
 
@@ -131,28 +132,27 @@ listToGrid =
     . zip [0 ..]
     . map (zip [0 ..])
 
-parseGrid ::
-  forall a.
-  (Char -> Maybe a) ->
-  String ->
-  Maybe (GridOf a)
-parseGrid parseCell =
-  fmap listToGrid . traverse (traverse parseCell) . lines
+parseGrid :: (Char -> Maybe a) -> String -> Maybe (GridOf a)
+parseGrid parseCell = fmap listToGrid . traverse (traverse parseCell) . lines
 
 printGrid :: forall a. (a -> String) -> GridOf a -> String
-printGrid draw m0 = evalState (foldM go "" l0) (fst $ fst $ head l0)
+printGrid drawCell grid = evalState (foldM go "" l) (row0Of l)
   where
-    l0 = Map.toAscList m0
-    go :: (MonadState Int m) => String -> (Pos, a) -> m String
-    go m ((x, _), b) = do
-      c <- get
-      if c == x
-        then pure (m <> draw b)
-        else put (c + 1) >> pure (m <> "\n" <> draw b)
+    l :: [(Pos, a)] = Map.toAscList grid
+    row0Of :: [(Pos, a)] -> Int
+    row0Of = fst . fst . head
+    go :: String -> (Pos, a) -> State Int String
+    go gridStr ((x, _), cell) = do
+      row <- get
+      if row == x
+        then pure (gridStr <> drawCell cell)
+        else put (row + 1) >> pure (gridStr <> "\n" <> drawCell cell)
 
 roundTripGrid :: (Char -> Maybe a) -> (a -> String) -> String -> Bool
-roundTripGrid parseCell printCell s =
-  (printGrid printCell <$> parseGrid parseCell s) == Just s
+roundTripGrid parseCell printCell s = identity s == s
+  where
+    identity :: String -> String
+    identity = maybe "" (printGrid printCell) . parseGrid parseCell
 
 --
 

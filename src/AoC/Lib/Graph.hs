@@ -8,7 +8,7 @@ import Data.Sequence (Seq (..), (><))
 import Data.Sequence qualified as Seq
 import Data.Set qualified as Set
 
-dfs :: Ord n => (n -> [n]) -> (n -> Bool) -> n -> [n]
+dfs :: (Ord n) => (n -> [n]) -> (n -> Bool) -> n -> [n]
 dfs = dfsOn id
 
 dfsOn :: forall n r. (Ord r) => (n -> r) -> (n -> [n]) -> (n -> Bool) -> n -> [n]

@@ -38,6 +38,7 @@ module AoC.Lib.Prelude
     decoSort,
     charAt,
     l2p,
+    l2p3,
     t2l,
     tupleMin,
     tupleMax,
@@ -280,6 +281,12 @@ charAt x = fmap fst . uncons . drop x
 l2p :: [a] -> Maybe (a, a)
 l2p [a, b] = Just (a, b)
 l2p _ = Nothing
+
+-- [1, 2, 3] -> Just (1, 2, 3)
+-- [1, 2] -> Nothing
+l2p3 :: [a] -> Maybe (a, a, a)
+l2p3 [a, b, c] = Just (a, b, c)
+l2p3 _ = Nothing
 
 -- (1, 2, 3, 4, 5) -> [1, 2, 3, 4, 5]
 t2l :: Each s s a a => s -> [a]

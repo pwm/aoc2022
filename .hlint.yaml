@@ -20,3 +20,6 @@
     - { name: [Data.Text, Data.Text.Encoding], as: T }
     - { name: [Data.Text.Lazy, Data.Text.Lazy.Encoding], as: TL }
 
+- ignore: { name: Redundant multi-way if }
+- ignore: { name: Use unless }
+- ignore: { name: Use newtype instead of data } 

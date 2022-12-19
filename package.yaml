@@ -107,6 +107,7 @@ default-extensions:
   - RankNTypes
   - ScopedTypeVariables
   - StandaloneDeriving
+  - StandaloneKindSignatures
   - StrictData
   - TupleSections
   - TypeApplications
@@ -130,3 +131,4 @@ ghc-options:
   - -Wno-unused-packages
   - -Wno-implicit-prelude
   - -Wno-missing-kind-signatures
+  - -Wno-unticked-promoted-constructors

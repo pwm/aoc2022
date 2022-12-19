@@ -52,6 +52,7 @@ library
       AoC.Puzzles.Y2022D16
       AoC.Puzzles.Y2022D17
       AoC.Puzzles.Y2022D18
+      AoC.Puzzles.Y2022D19
   other-modules:
       Paths_aoc2022
   hs-source-dirs:
@@ -97,12 +98,13 @@ library
       RankNTypes
       ScopedTypeVariables
       StandaloneDeriving
+      StandaloneKindSignatures
       StrictData
       TupleSections
       TypeApplications
       TypeOperators
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-implicit-prelude -Wno-missing-kind-signatures
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-implicit-prelude -Wno-missing-kind-signatures -Wno-unticked-promoted-constructors
   build-depends:
       advent-of-code-ocr
     , base >=4.7 && <5
@@ -182,12 +184,13 @@ executable aoc
       RankNTypes
       ScopedTypeVariables
       StandaloneDeriving
+      StandaloneKindSignatures
       StrictData
       TupleSections
       TypeApplications
       TypeOperators
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-implicit-prelude -Wno-missing-kind-signatures -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-implicit-prelude -Wno-missing-kind-signatures -Wno-unticked-promoted-constructors -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       advent-of-code-ocr
     , aoc2022
@@ -246,6 +249,7 @@ test-suite spec
       AoC.Tests.Y2022D16Spec
       AoC.Tests.Y2022D17Spec
       AoC.Tests.Y2022D18Spec
+      AoC.Tests.Y2022D19Spec
       Paths_aoc2022
   hs-source-dirs:
       test
@@ -290,12 +294,13 @@ test-suite spec
       RankNTypes
       ScopedTypeVariables
       StandaloneDeriving
+      StandaloneKindSignatures
       StrictData
       TupleSections
       TypeApplications
       TypeOperators
       ViewPatterns
-  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-implicit-prelude -Wno-missing-kind-signatures -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Weverything -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missed-specialisations -Wno-all-missed-specialisations -Wno-unsafe -Wno-safe -Wno-missing-local-signatures -Wno-monomorphism-restriction -Wno-missing-export-lists -Wno-missing-home-modules -Wno-missing-safe-haskell-mode -Wno-prepositive-qualified-module -Wno-unused-packages -Wno-implicit-prelude -Wno-missing-kind-signatures -Wno-unticked-promoted-constructors -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       advent-of-code-ocr
     , aoc2022

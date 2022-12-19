@@ -58,6 +58,7 @@ module AoC.Lib.Prelude
     decToBin,
     sqrtInt,
     choose,
+    ichoose,
     unions,
     intersections,
   )
@@ -67,8 +68,9 @@ import Advent.OCR as X
 import AoC.Core.Date
 import AoC.Core.File
 import Control.Applicative as X (Alternative (..), liftA2, liftA3)
-import Control.Lens as X (Each (..), element, filtered, filteredBy, folded, maximumByOf, maximumOf, minimumByOf, minimumOf, over, preview, review, set, sumOf, toListOf, use, uses, view, (%=), (%~), (*~), (+=), (+~), (.=), (.~), (^.), (^..), (^?), _1, _2, _3, _4, _5, _Just, _Nothing)
+import Control.Lens as X (Each (..), element, filtered, filteredBy, folded, maximumByOf, maximumOf, minimumByOf, minimumOf, over, preview, review, set, sumOf, toListOf, use, uses, view, (%=), (%~), (*~), (+=), (+~), (-~), (.=), (.~), (^.), (^..), (^?), _1, _2, _3, _4, _5, _Just, _Nothing)
 import Control.Monad as X (foldM, guard, when, (<=<), (>=>))
+import Control.Monad.Logic (MonadLogic, interleave)
 import Data.Bifunctor as X
 import Data.Bitraversable as X
 import Data.Char as X (chr, ord)
@@ -79,6 +81,7 @@ import Data.Function as X
 import Data.Functor as X
 import Data.Functor.Identity as X (Identity (..))
 import Data.Generics.Labels as X ()
+import Data.Kind as X
 import Data.List as List
 import Data.List.Split as X
 import Data.Map.Strict as Map (Map, (!?))
@@ -332,6 +335,10 @@ sqrtInt = floor @Double . sqrt . fromIntegral
 
 choose :: (Traversable t, Alternative m) => t a -> m a
 choose = asum . fmap pure
+
+-- with fair disjunction but much slower than choose
+ichoose :: (Functor t, Foldable t, MonadLogic m) => t a -> m a
+ichoose = foldr interleave empty . fmap pure
 
 unions :: (Eq a) => [[a]] -> [a]
 unions = foldr union []

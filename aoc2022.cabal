@@ -53,6 +53,8 @@ library
       AoC.Puzzles.Y2022D17
       AoC.Puzzles.Y2022D18
       AoC.Puzzles.Y2022D19
+      AoC.Puzzles.Y2022D20
+      AoC.Puzzles.Y2022D21
   other-modules:
       Paths_aoc2022
   hs-source-dirs:
@@ -111,6 +113,7 @@ library
     , bytestring
     , containers
     , cookie
+    , data-clist
     , data-fix
     , directory
     , either
@@ -198,6 +201,7 @@ executable aoc
     , bytestring
     , containers
     , cookie
+    , data-clist
     , data-fix
     , directory
     , either
@@ -250,6 +254,8 @@ test-suite spec
       AoC.Tests.Y2022D17Spec
       AoC.Tests.Y2022D18Spec
       AoC.Tests.Y2022D19Spec
+      AoC.Tests.Y2022D20Spec
+      AoC.Tests.Y2022D21Spec
       Paths_aoc2022
   hs-source-dirs:
       test
@@ -308,6 +314,7 @@ test-suite spec
     , bytestring
     , containers
     , cookie
+    , data-clist
     , data-fix
     , directory
     , either

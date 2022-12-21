@@ -12,6 +12,7 @@ dependencies:
   - bytestring
   - containers
   - cookie
+  - data-clist
   - data-fix
   - directory
   - either

@@ -32,6 +32,13 @@ solveA _ = ()
 
 solveB :: a -> ()
 solveB _ = ()
+
+-- for test data
+s0 :: String
+s0 =
+  unpack
+    [trimming|
+|]
 EOF
 )
 

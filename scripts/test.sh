@@ -12,4 +12,5 @@ run_tests() {
   cabal --ghc-options -Wwarn test "${arr[@]}"
 }
 
+cabal build --enable-tests
 time run_tests "$@"

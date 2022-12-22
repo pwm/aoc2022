@@ -5,27 +5,28 @@ import AoC.Lib.Prelude
 import Data.Map.Strict qualified as Map
 import System.IO qualified as SIO
 
-displayGrid :: GridOf a -> (a -> String) -> IO ()
-displayGrid grid drawCell = display grid (putStrLn . drawGrid drawCell)
-
-display :: a -> (a -> IO ()) -> IO ()
-display a draw = do
+displayGrid :: GridOf cell -> (cell -> String) -> IO ()
+displayGrid grid drawCell = do
   SIO.hSetBuffering stdin SIO.NoBuffering
   SIO.hSetEcho stdin False
   putStrLn clrScr
-  draw a
+  putStrLn $ drawGrid drawCell grid
 
-drawGrid :: forall a. (a -> String) -> GridOf a -> String
-drawGrid drawCell = Map.foldrWithKey go ""
-  where
-    go :: Pos -> a -> String -> String
-    go pos a screen = screen <> cursorTo pos <> drawCell a
+-- Draw by moving the cursor to the cell pos, this works with eg. holey grids
+-- The resulting string will look sg. like "\ESC[12;16H.\ESC[12;15H# ..."
+drawGrid :: forall cell. (cell -> String) -> GridOf cell -> String
+drawGrid drawCell =
+  let putCell :: Pos -> cell -> String -> String
+      putCell pos a screen = screen <> cursorTo pos <> drawCell a
+   in Map.foldrWithKey putCell ""
 
 clrScr :: String
 clrScr = "\ESC[2J"
 
 cursorTo :: Pos -> String
 cursorTo (x, y) = "\ESC[" <> show (x + 1) <> ";" <> show (y + 1) <> "H"
+
+-- Colour
 
 colourAs :: Colour -> String -> String
 colourAs c s = "\ESC[" <> colourToAnsi c <> ";1m" <> s <> "\ESC[0m"
@@ -54,10 +55,14 @@ colourToAnsi = \case
   White -> "70"
   Reset -> "0"
 
+-- Interaction
+
 getKey :: IO String
 getKey = reverse <$> getKeyPress ""
   where
+    getKeyPress :: String -> IO String
     getKeyPress chars = do
       char <- SIO.getChar
+      let chars' = char : chars
       more <- SIO.hReady stdin
-      (if more then getKeyPress else pure) (char : chars)
+      if more then getKeyPress chars' else pure chars'

@@ -101,7 +101,7 @@ import Debug.Trace as X
 import GHC.Generics as X (Generic)
 import NeatInterpolation as X hiding (text)
 import System.IO as X (stdin)
-import System.IO.Unsafe (unsafePerformIO)
+import System.IO.Unsafe as X (unsafePerformIO)
 import Text.Pretty.Simple (CheckColorTty (..), OutputOptions (..), StringOutputStyle (..), pPrintOpt, pShowOpt)
 import Text.Read (readMaybe)
 import Prelude as X

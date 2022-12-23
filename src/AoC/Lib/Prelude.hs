@@ -47,6 +47,8 @@ module AoC.Lib.Prelude
     pick,
     slicesOf,
     lookups,
+    setLookups,
+    rotate,
     compose,
     composeM,
     times,
@@ -315,6 +317,13 @@ slicesOf n = unfoldr $ \xs ->
 
 lookups :: (Ord k) => Map k v -> [k] -> [v]
 lookups m = mapMaybe (m !?)
+
+setLookups :: (Ord v) => Set v -> [v] -> [v]
+setLookups s = mapMaybe $
+  \v -> if Set.member v s then Just v else Nothing
+
+rotate :: [a] -> [a]
+rotate l = drop 1 l <> take 1 l
 
 substring :: Int -> Int -> String -> String
 substring start end = take (end - start) . drop start

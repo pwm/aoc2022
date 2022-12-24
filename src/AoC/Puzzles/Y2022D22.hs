@@ -127,7 +127,7 @@ turnP =
     (\case "L" -> Just TL; "R" -> Just TR; _ -> Nothing)
 
 ppg :: Grid -> IO ()
-ppg grid = displayGrid grid ppCell
+ppg = displayGrid ppCell
 
 ppCell :: Cell -> String
 ppCell = \case

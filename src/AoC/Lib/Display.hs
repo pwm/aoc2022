@@ -5,8 +5,8 @@ import AoC.Lib.Prelude
 import Data.Map.Strict qualified as Map
 import System.IO qualified as SIO
 
-displayGrid :: GridOf cell -> (cell -> String) -> IO ()
-displayGrid grid drawCell = do
+displayGrid :: (cell -> String) -> GridOf cell -> IO ()
+displayGrid drawCell grid = do
   SIO.hSetBuffering stdin SIO.NoBuffering
   SIO.hSetEcho stdin False
   putStrLn clrScr

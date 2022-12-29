@@ -31,6 +31,8 @@ module AoC.Lib.Prelude
     loopTill,
     loopTillM,
     headOr,
+    lastOr,
+    takeEnd,
     dropEnd,
     enumerate,
     hasKeys,
@@ -255,6 +257,17 @@ loopTillM p step x = do
 headOr :: a -> [a] -> a
 headOr x [] = x
 headOr _ (a : _) = a
+
+-- lastOr 0 [] -> 0
+-- lastOr 0 [1, 2, 3] -> 3
+lastOr :: a -> [a] -> a
+lastOr x [] = x
+lastOr _ [x] = x
+lastOr x (_ : xs) = lastOr x xs
+
+-- takeEnd 1 [1..3] -> [1, 2]
+takeEnd :: Int -> [a] -> [a]
+takeEnd n xs = drop (length xs - n) xs
 
 -- dropEnd 1 [1..3] -> [1, 2]
 dropEnd :: Int -> [a] -> [a]

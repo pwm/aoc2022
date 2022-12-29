@@ -46,3 +46,11 @@ treeP = do
     fileP, dirP :: Parser Node
     fileP = liftA2 File intP (some (char '.' <|> lowerChar))
     dirP = fmap (Dir 0) (strP "dir" *> some lowerChar)
+
+ppTree :: Tree Node -> String
+ppTree = drawTree . foldTree (Node . ppNode)
+  where
+    ppNode :: Node -> String
+    ppNode = \case
+      File size name -> name <> " (" <> show size <> ")"
+      Dir size name -> name <> " (" <> show size <> ")"

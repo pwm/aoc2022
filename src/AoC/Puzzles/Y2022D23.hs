@@ -2,7 +2,6 @@ module AoC.Puzzles.Y2022D23 where
 
 import AoC.Lib.Grid hiding (move, neighbours8)
 import AoC.Lib.Prelude
-import Control.Monad.State.Strict
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 

@@ -1,8 +1,7 @@
 module AoC.Puzzles.Y2022D05 where
 
 import AoC.Lib.Parser
-import AoC.Lib.Prelude hiding (some)
-import Data.Map.Strict ((!))
+import AoC.Lib.Prelude
 import Data.Map.Strict qualified as Map
 
 parse :: String -> Maybe (Crates, [Move])

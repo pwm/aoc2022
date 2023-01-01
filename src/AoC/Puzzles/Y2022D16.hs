@@ -2,10 +2,8 @@ module AoC.Puzzles.Y2022D16 where
 
 import AoC.Lib.Graph qualified as Graph
 import AoC.Lib.Parser
-import AoC.Lib.Prelude hiding (id, some)
+import AoC.Lib.Prelude hiding (id)
 import Control.Monad.Logic
-import Control.Monad.State.Strict
-import Data.Map.Strict ((!))
 import Data.Map.Strict qualified as Map
 
 parse :: String -> Maybe Pipes
@@ -128,23 +126,12 @@ calcPaths :: Pipes -> Map ValveId [(ValveId, (Int, [ValveId]))]
 calcPaths pipes =
   let valveIds = Map.keys pipes
       pairs = filter (uncurry (/=)) $ liftA2 (,) valveIds valveIds
-   in foldr (\(f, t) -> Map.insertWith (<>) f [(t, getPath f t)]) mempty pairs
-  where
-    getPath :: ValveId -> ValveId -> (Int, [ValveId])
-    getPath from to =
-      let vs = Graph.paths (\vid -> snd (pipes ! vid)) (== to) from
-       in head $ sortOn fst $ map (\l -> (length l - 1, l)) vs
+   in foldr (\(f, t) -> Map.insertWith (<>) f [(t, getPath pipes f t)]) mempty pairs
 
--- calcDists :: Pipes -> Map ValveId [(ValveId, Int)]
--- calcDists pipes =
---   let valveIds = Map.keys pipes
---       pairs = filter (uncurry (/=)) $ liftA2 (,) valveIds valveIds
---    in foldr (\(f, t) -> Map.insertWith (<>) f [(t, getDist f t)]) mempty pairs
---   where
---     getDist :: ValveId -> ValveId -> Int
---     getDist from to =
---       let vs = Graph.dijkstra (\vid -> map (,1) (snd (pipes ! vid))) (== to) from
---        in snd (last vs)
+getPath :: Pipes -> ValveId -> ValveId -> (Int, [ValveId])
+getPath pipes from to =
+  let vs = Graph.paths (\vid -> snd (pipes ! vid)) (== to) from
+   in head $ sortOn fst $ map (\l -> (length l - 1, l)) vs
 
 openValve :: ValveId -> Pipes -> Pipes
 openValve = Map.adjust (first (set #status Opened))

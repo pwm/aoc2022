@@ -3,7 +3,7 @@ module AoC.Puzzles.Y2022D22 where
 import AoC.Lib.Display
 import AoC.Lib.Grid (Dir4 (..), GridOf, Pos, listToGrid, (<+>))
 import AoC.Lib.Parser
-import AoC.Lib.Prelude hiding (some)
+import AoC.Lib.Prelude
 import Data.Map.Strict qualified as Map
 
 parse :: String -> Maybe (Grid, [Step])

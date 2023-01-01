@@ -1,7 +1,6 @@
 module AoC.Puzzles.Y2022D20 where
 
 import AoC.Lib.Prelude
-import Control.Monad.State.Strict
 import Data.CircularList (CList)
 import Data.CircularList qualified as CL
 

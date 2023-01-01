@@ -2,7 +2,6 @@ module AoC.Puzzles.Y2022D10 where
 
 import AoC.Lib.Parser
 import AoC.Lib.Prelude hiding (cycle)
-import Control.Monad.State.Strict
 import Data.Set qualified as Set
 
 parse :: String -> Maybe [Cmd]

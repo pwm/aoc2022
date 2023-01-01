@@ -1,8 +1,7 @@
 module AoC.Puzzles.Y2022D13 where
 
 import AoC.Lib.Parser
-import AoC.Lib.Prelude hiding (sepBy, some)
-import Control.Arrow
+import AoC.Lib.Prelude
 
 parse :: String -> Maybe [(Packet, Packet)]
 parse = parseMaybe (sepEndBy1 packetPairP newline)

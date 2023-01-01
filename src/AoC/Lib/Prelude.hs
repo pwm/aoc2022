@@ -22,6 +22,7 @@ module AoC.Lib.Prelude
     pp,
     ppw,
     pps,
+    ppt,
     pad,
     rpad,
     withIO,
@@ -71,10 +72,11 @@ where
 import Advent.OCR as X
 import AoC.Core.Date
 import AoC.Core.File
-import Control.Applicative as X (Alternative (..), liftA2, liftA3)
+import Control.Applicative as X (Alternative (empty, (<|>)), liftA2, liftA3)
+import Control.Arrow as X ((&&&))
 import Control.Lens as X (Each (..), element, filtered, filteredBy, folded, maximumByOf, maximumOf, minimumByOf, minimumOf, over, preview, review, set, sumOf, toListOf, use, uses, view, (%=), (%~), (*~), (+=), (+~), (-~), (.=), (.~), (^.), (^..), (^?), _1, _2, _3, _4, _5, _Just, _Nothing)
-import Control.Monad as X (foldM, guard, when, (<=<), (>=>))
 import Control.Monad.Logic (MonadLogic, interleave)
+import Control.Monad.State.Strict as X
 import Data.Bifunctor as X
 import Data.Bitraversable as X
 import Data.Char as X (chr, ord)
@@ -87,8 +89,8 @@ import Data.Functor.Identity as X (Identity (..))
 import Data.Generics.Labels as X ()
 import Data.Kind as X
 import Data.List as List
-import Data.List.Split as X
-import Data.Map.Strict as Map (Map, (!?))
+import Data.List.Split as X hiding (sepBy)
+import Data.Map.Strict as Map (Map, (!), (!?))
 import Data.Map.Strict qualified as Map
 import Data.Maybe as X
 import Data.Ord as X (Down (..), comparing)
@@ -99,11 +101,12 @@ import Data.Text as T (Text, unpack)
 import Data.Text.Lazy as TL (unpack)
 import Data.Time.Calendar
 import Data.Time.Clock
+import Data.Tree as X
 import Data.Tuple as X
 import Data.Void as X (Void)
 import Debug.Trace as X
 import GHC.Generics as X (Generic)
-import NeatInterpolation as X hiding (text)
+import NeatInterpolation as X (trimming, untrimming)
 import System.IO as X (stdin)
 import System.IO.Unsafe as X (unsafePerformIO)
 import Text.Pretty.Simple (CheckColorTty (..), OutputOptions (..), StringOutputStyle (..), pPrintOpt, pShowOpt)
@@ -185,6 +188,9 @@ ppw width = pPrintOpt NoCheckColorTty (outOpts & #outputOptionsPageWidth .~ widt
 
 pps :: (Show a) => a -> String
 pps = TL.unpack . pShowOpt outOpts
+
+ppt :: (Show n) => Tree n -> IO ()
+ppt = putStrLn . drawTree . foldTree (Node . show)
 
 outOpts :: OutputOptions
 outOpts =

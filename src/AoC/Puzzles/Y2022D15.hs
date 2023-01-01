@@ -1,7 +1,7 @@
 module AoC.Puzzles.Y2022D15 where
 
 import AoC.Lib.Grid
-import AoC.Lib.Parser hiding (count)
+import AoC.Lib.Parser
 import AoC.Lib.Prelude
 
 parse :: String -> Maybe [((Pos, Pos), Int)]

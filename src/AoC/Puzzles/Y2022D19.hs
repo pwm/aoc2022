@@ -3,7 +3,6 @@ module AoC.Puzzles.Y2022D19 where
 import AoC.Lib.Parser
 import AoC.Lib.Prelude hiding (id)
 import Control.Monad.Logic
-import Control.Monad.State.Strict
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 

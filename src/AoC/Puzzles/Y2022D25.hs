@@ -1,7 +1,7 @@
 module AoC.Puzzles.Y2022D25 where
 
 import AoC.Lib.Parser
-import AoC.Lib.Prelude hiding (some)
+import AoC.Lib.Prelude
 
 parse :: String -> Maybe [[Snafu]]
 parse = parseMaybe (sepEndBy1 (some snafuDigitP) newline)

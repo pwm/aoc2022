@@ -3,7 +3,6 @@ module AoC.Puzzles.Y2022D12 where
 import AoC.Lib.Graph
 import AoC.Lib.Grid
 import AoC.Lib.Prelude
-import Data.Map.Strict ((!))
 import Data.Map.Strict qualified as Map
 
 parse :: String -> Maybe Grid

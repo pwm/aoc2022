@@ -1,8 +1,7 @@
 module AoC.Puzzles.Y2022D07 where
 
 import AoC.Lib.Parser
-import AoC.Lib.Prelude hiding (many, some)
-import Data.Tree
+import AoC.Lib.Prelude
 
 parse :: String -> Maybe (Tree Node)
 parse = parseMaybe treeP
@@ -46,11 +45,3 @@ treeP = do
     fileP, dirP :: Parser Node
     fileP = liftA2 File intP (some (char '.' <|> lowerChar))
     dirP = fmap (Dir 0) (strP "dir" *> some lowerChar)
-
-ppTree :: Tree Node -> String
-ppTree = drawTree . foldTree (Node . ppNode)
-  where
-    ppNode :: Node -> String
-    ppNode = \case
-      File size name -> name <> " (" <> show size <> ")"
-      Dir size name -> name <> " (" <> show size <> ")"

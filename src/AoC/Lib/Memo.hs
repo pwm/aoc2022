@@ -1,7 +1,6 @@
 module AoC.Lib.Memo where
 
 import AoC.Lib.Prelude
-import Control.Monad.State.Strict
 import Data.Hashable
 import Data.IntMap.Strict (IntMap)
 import Data.IntMap.Strict qualified as IntMap

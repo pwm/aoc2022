@@ -1,8 +1,6 @@
 module AoC.Lib.Grid where
 
 import AoC.Lib.Prelude
-import Control.Monad.State.Strict
-import Data.Map.Strict ((!))
 import Data.Map.Strict qualified as Map
 
 type GridOf a = Map Pos a

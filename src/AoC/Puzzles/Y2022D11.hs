@@ -1,8 +1,7 @@
 module AoC.Puzzles.Y2022D11 where
 
 import AoC.Lib.Parser
-import AoC.Lib.Prelude hiding (id, lcm, round, some)
-import Control.Monad.State.Strict
+import AoC.Lib.Prelude hiding (id, lcm, round, (!))
 import Data.IntMap (IntMap, (!))
 import Data.IntMap qualified as IntMap
 

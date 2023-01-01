@@ -3,7 +3,6 @@ module AoC.Puzzles.Y2022D09 where
 import AoC.Lib.Grid
 import AoC.Lib.Parser
 import AoC.Lib.Prelude
-import Control.Monad.State.Strict
 import Data.Set qualified as Set
 
 parse :: String -> Maybe [(Dir4, Int)]

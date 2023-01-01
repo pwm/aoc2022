@@ -130,8 +130,8 @@ calcPaths pipes =
 
 getPath :: Pipes -> ValveId -> ValveId -> (Int, [ValveId])
 getPath pipes from to =
-  let vs = Graph.paths (\vid -> snd (pipes ! vid)) (== to) from
-   in head $ sortOn fst $ map (\l -> (length l - 1, l)) vs
+  let vs = Graph.bfsSP (\vid -> snd (pipes ! vid)) to from
+   in (length vs - 1, vs)
 
 openValve :: ValveId -> Pipes -> Pipes
 openValve = Map.adjust (first (set #status Opened))

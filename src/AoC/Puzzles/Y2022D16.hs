@@ -1,181 +1,154 @@
 module AoC.Puzzles.Y2022D16 where
 
-import AoC.Lib.Graph qualified as Graph
+import AoC.Lib.Graph
 import AoC.Lib.Parser
-import AoC.Lib.Prelude hiding (id)
+import AoC.Lib.Prelude
 import Control.Monad.Logic
 import Data.Map.Strict qualified as Map
 
-parse :: String -> Maybe Pipes
+parse :: String -> Maybe AdjList
 parse = fmap Map.fromList . parseMaybe (sepEndBy1 lineP newline)
 
-solveA :: Pipes -> Int
-solveA pipes =
-  let (winner, iters, prunes) = solve pipes
-   in withIO (putStrLn ("iters/prunes: " <> show (iters, prunes))) winner.released
+solveA :: AdjList -> Int
+solveA adjList =
+  let (winner, iters, prunes) = solve 30 "AA" adjList
+      displayStats =
+        putStrLn (ppsw 200 (winner & #paths .~ mempty))
+          >> putStrLn ""
+          >> putStrLn ("iters/prunes: " <> show (iters, prunes))
+   in withIO displayStats winner.released
 
-solveB :: Pipes -> ()
+solveB :: AdjList -> ()
 solveB _ = ()
 
-type Pipes = Map ValveId (Valve, [ValveId])
-
-newtype ValveId = ValveId String
-  deriving stock (Show, Eq, Ord, Generic)
+type AdjList = Map String (Int, [String])
 
 data Valve = Valve
-  { id :: ValveId,
+  { name :: String,
     flow :: Int,
-    status :: Status
+    dist :: Int
   }
-  deriving stock (Show, Eq, Ord, Generic)
+  deriving stock (Show, Generic)
 
-data Status = Closed | Opened
-  deriving stock (Show, Eq, Ord, Bounded, Enum, Generic)
+type Paths = Map String [Valve]
 
 data Candidate = Candidate
-  { turn :: Int,
-    pipes :: Pipes,
-    released :: Int,
-    curId :: ValveId,
-    opens :: [(ValveId, Int)]
+  { t :: Int,
+    paths :: Paths,
+    nexts :: [Valve],
+    opened :: [Valve],
+    released :: Int
   }
-  deriving stock (Show, Eq, Ord, Generic)
-
-mkCandidate :: Pipes -> Candidate
-mkCandidate pipes =
-  Candidate
-    { turn = 1,
-      pipes = pipes,
-      released = 0,
-      curId = ValveId "AA",
-      opens = []
-    }
+  deriving stock (Show, Generic)
 
 data Search = Search
-  { maxTurn :: Int,
-    paths :: Map ValveId [(ValveId, (Int, [ValveId]))],
-    winning :: Candidate,
-    -- seen :: Map (Int, Set ValveId) Int,
-    -- stats
+  { tLimit :: Int,
+    best :: Candidate,
     iters :: Int,
     prunes :: Int,
     samplingFreq :: Int
   }
-  deriving stock (Show, Eq, Ord, Generic)
+  deriving stock (Show, Generic)
 
-mkSearch :: Pipes -> Search
-mkSearch pipes =
-  Search
-    { maxTurn = 30,
-      paths = calcPaths pipes,
-      winning = mkCandidate pipes,
-      -- seen = mempty,
-      iters = 0,
-      prunes = 0,
-      samplingFreq = 1e4
-    }
+solve :: Int -> String -> AdjList -> (Candidate, Int, Int)
+solve tLimit start adjList =
+  let candidate = initCandidate start adjList
+      search = Search tLimit candidate 0 0 1e4
+      result = execState (observeAllT (solver candidate)) search
+   in (result.best, result.iters, result.prunes)
 
-solve :: Pipes -> (Candidate, Int, Int)
-solve pipes =
-  let candidate0 = mkCandidate pipes
-      search0 = mkSearch pipes
-      result = execState (observeAllT (solver candidate0)) search0
-   in (result.winning, result.iters, result.prunes)
+initCandidate :: String -> AdjList -> Candidate
+initCandidate start adjList =
+  let paths0 = calcPaths start adjList
+   in Candidate
+        { t = 1,
+          paths = removeValve start paths0,
+          nexts = paths0 ! start,
+          opened = [],
+          released = 0
+        }
+
+calcPaths :: String -> AdjList -> Paths
+calcPaths start adjList =
+  let vids = [vid | (vid, (flow, _)) <- Map.toList adjList, flow > 0 || vid == start]
+   in foldr mkPaths mempty [(from, to) | from <- vids, to <- vids, from /= to]
+  where
+    mkPaths :: (String, String) -> Paths -> Paths
+    mkPaths (from, to) = Map.insertWith (<>) from [Valve to (fst (adjList ! to)) (calcDist from to)]
+    calcDist :: String -> String -> Int
+    calcDist from to = length (bfsSP (snd . (adjList !)) to from) - 1
 
 solver :: Candidate -> LogicT (State Search) Candidate
-solver candidate = do
-  search <- get
-  when (search.iters `mod` search.samplingFreq == 0) $
-    traceM ("ITERS " <> rpad 10 (show search.iters) <> " | PRUNES " <> show search.prunes)
+solver c = do
+  s <- get
+  when (s.iters > 0 && s.iters `mod` s.samplingFreq == 0) $
+    traceM ("ITERS " <> rpad 9 (show s.iters) <> " | PRUNES " <> rpad 9 (show s.prunes))
   #iters += 1
-  let turnsLeft = search.maxTurn - candidate.turn
+  let tLeft = s.tLimit - c.t
   if
-      | candidate.turn > search.maxTurn -> error ("Too many turns: " <> show candidate.turn)
-      | candidate.turn == search.maxTurn,
-        candidate.released > search.winning.released ->
-          #winning .= candidate >> pure candidate
-      | candidate.turn == search.maxTurn -> empty
-      -- \| candidate.released < fromMaybe 0 (search.seen !? (candidate.turn, candidate.opens)) -> do
-      --     #prunes += 1 >> empty
-      | closeds <- getClosed candidate.pipes,
-        null closeds ->
-          solver $
-            candidate
-              & #turn +~ turnsLeft
-              & #released +~ turnsLeft * curFlow candidate.pipes
+      | c.t == s.tLimit, c.released > s.best.released -> #best .= c >> pure c
+      | c.t == s.tLimit -> empty
+      | releasedUpperBound tLeft c <= s.best.released -> #prunes += 1 >> empty
+      | null c.nexts -> solver $ tick tLeft c
       | otherwise -> do
-          let nexts = filter (isOpen candidate.pipes . fst) (search.paths ! candidate.curId)
-          (nextId, (dist, steps)) <- choose nexts
-          let -- dist + 1 for open or turns left if there's no time to get to the next closed valve
-              turnCost = min (dist + 1) turnsLeft
-              -- have enough turns left to reach the next closed valve and open it
-              canOpen = dist + 1 <= turnsLeft
-              newFlow = if canOpen then (getById nextId candidate.pipes).flow else 0
-              candidate' =
-                candidate
-                  & #pipes .~ (if canOpen then openValve nextId candidate.pipes else candidate.pipes)
-                  & #curId .~ (if dist <= turnsLeft then nextId else candidate.curId)
-                  & #turn .~ candidate.turn + turnCost
-                  & #released .~ candidate.released + turnCost * curFlow candidate.pipes + newFlow
-                  & #opens %~ (\l -> if canOpen then (nextId, candidate.turn + turnCost) : l else l)
-          -- This has quite the cost, so the prune must worth it
-          -- #seen %= Map.insertWith max (candidate'.turn, candidate'.opens) candidate'.released
-          solver candidate'
+          to <- choose c.nexts
+          if tLeft < to.dist + 1
+            then solver $ tick tLeft c
+            else solver $ openValve to $ tick to.dist c
 
-calcPaths :: Pipes -> Map ValveId [(ValveId, (Int, [ValveId]))]
-calcPaths pipes =
-  let valveIds = Map.keys pipes
-      pairs = filter (uncurry (/=)) $ liftA2 (,) valveIds valveIds
-   in foldr (\(f, t) -> Map.insertWith (<>) f [(t, getPath pipes f t)]) mempty pairs
+releasedUpperBound :: Int -> Candidate -> Int
+releasedUpperBound tLeft c =
+  c.released
+    + tLeft * curFlow c.opened
+    + (tLeft - 1) * sum [v.flow | v <- c.nexts, v.dist < tLeft]
 
-getPath :: Pipes -> ValveId -> ValveId -> (Int, [ValveId])
-getPath pipes from to =
-  let vs = Graph.bfsSP (\vid -> snd (pipes ! vid)) to from
-   in (length vs - 1, vs)
+tick :: Int -> Candidate -> Candidate
+tick dist c =
+  c
+    & #t +~ dist
+    & #released +~ dist * curFlow c.opened
 
-openValve :: ValveId -> Pipes -> Pipes
-openValve = Map.adjust (first (set #status Opened))
+openValve :: Valve -> Candidate -> Candidate
+openValve v c =
+  c
+    & #t +~ 1
+    & #paths %~ removeValve v.name
+    & #nexts .~ c.paths ! v.name
+    & #opened %~ (v :)
+    & #released +~ curFlow c.opened + v.flow
 
-curFlow :: Pipes -> Int
-curFlow = sum . map (view (_1 . #flow)) . Map.elems . getOpened
+curFlow :: [Valve] -> Int
+curFlow = sum . map (view #flow)
 
-getOpened, getClosed :: Pipes -> Pipes
-getOpened = Map.filter ((== Opened) . view (_1 . #status))
-getClosed = Map.filter ((== Closed) . view (_1 . #status))
+removeValve :: String -> Paths -> Paths
+removeValve vid = Map.delete vid . Map.map (filter ((/= vid) . view #name))
 
-isOpen :: Pipes -> ValveId -> Bool
-isOpen pipes vid = (getById vid pipes).status == Closed
-
-getById :: ValveId -> Pipes -> Valve
-getById id pipes = fst (pipes ! id)
-
-lineP :: Parser (ValveId, (Valve, [ValveId]))
+lineP :: Parser (String, (Int, [String]))
 lineP = do
-  idStr <- strP "Valve" *> some upperChar <* strP " has flow rate="
+  vid <- strP "Valve" *> some upperChar <* strP " has flow rate="
   flow <- intP <* strP ";"
-  _ <- strP "tunnels" <|> strP "tunnel"
-  _ <- (strP "leads" <|> strP "lead") <* strP "to"
-  _ <- strP "valves" <|> strP "valve"
-  ids <- map ValveId <$> sepBy1 (some upperChar) (strP ",")
-  let id = ValveId idStr
-      status = if flow == 0 then Opened else Closed
-  pure (id, (Valve {id, flow, status}, ids))
+  _ <- pluralStrP "tunnel" <* pluralStrP "lead" <* strP "to" <* pluralStrP "valve"
+  neighbours <- sepBy1 (some upperChar) (strP ",")
+  pure (vid, (flow, neighbours))
+  where
+    pluralStrP :: String -> Parser String
+    pluralStrP s = strP (s <> "s") <|> strP s
 
 --
 
-g0 :: Pipes
+g0 :: AdjList
 g0 =
   Map.fromList
-    [ (ValveId "AA", (Valve {id = ValveId "AA", flow = 0, status = Opened}, [ValveId "DD", ValveId "II", ValveId "BB"])),
-      (ValveId "BB", (Valve {id = ValveId "BB", flow = 13, status = Closed}, [ValveId "CC", ValveId "AA"])),
-      (ValveId "CC", (Valve {id = ValveId "CC", flow = 2, status = Closed}, [ValveId "DD", ValveId "BB"])),
-      (ValveId "DD", (Valve {id = ValveId "DD", flow = 20, status = Closed}, [ValveId "CC", ValveId "AA", ValveId "EE"])),
-      (ValveId "EE", (Valve {id = ValveId "EE", flow = 3, status = Closed}, [ValveId "FF", ValveId "DD"])),
-      (ValveId "FF", (Valve {id = ValveId "FF", flow = 0, status = Opened}, [ValveId "EE", ValveId "GG"])),
-      (ValveId "GG", (Valve {id = ValveId "GG", flow = 0, status = Opened}, [ValveId "FF", ValveId "HH"])),
-      (ValveId "HH", (Valve {id = ValveId "HH", flow = 22, status = Closed}, [ValveId "GG"])),
-      (ValveId "II", (Valve {id = ValveId "II", flow = 0, status = Opened}, [ValveId "AA", ValveId "JJ"])),
-      (ValveId "JJ", (Valve {id = ValveId "JJ", flow = 21, status = Closed}, [ValveId "II"]))
+    [ ("AA", (0, ["DD", "II", "BB"])),
+      ("BB", (13, ["CC", "AA"])),
+      ("CC", (2, ["DD", "BB"])),
+      ("DD", (20, ["CC", "AA", "EE"])),
+      ("EE", (3, ["FF", "DD"])),
+      ("FF", (0, ["EE", "GG"])),
+      ("GG", (0, ["FF", "HH"])),
+      ("HH", (22, ["GG"])),
+      ("II", (0, ["AA", "JJ"])),
+      ("JJ", (21, ["II"]))
     ]
 
 s00 :: String

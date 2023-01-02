@@ -22,10 +22,12 @@ module AoC.Lib.Prelude
     pp,
     ppw,
     pps,
+    ppsw,
     ppt,
     pad,
     rpad,
     withIO,
+    ddf,
     fixpoint,
     fixpointL,
     fixpointM,
@@ -189,6 +191,9 @@ ppw width = pPrintOpt NoCheckColorTty (outOpts & #outputOptionsPageWidth .~ widt
 pps :: (Show a) => a -> String
 pps = TL.unpack . pShowOpt outOpts
 
+ppsw :: (Show a) => Int -> a -> String
+ppsw width = TL.unpack . pShowOpt (outOpts & #outputOptionsPageWidth .~ width)
+
 ppt :: (Show n) => Tree n -> IO ()
 ppt = putStrLn . drawTree . foldTree (Node . show)
 
@@ -216,6 +221,11 @@ rpad n s
 
 withIO :: IO a -> b -> b
 withIO a b = let !_ = unsafePerformIO a in b
+
+ddf :: (Applicative f, Show a) => FilePath -> a -> f ()
+ddf file a = unsafePerformIO $ do
+  !_ <- appendFile file (show a <> "\n")
+  pure (pure ())
 
 -- strict
 fixpoint :: (Eq a) => (a -> a) -> a -> a

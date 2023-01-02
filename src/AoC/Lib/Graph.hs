@@ -134,3 +134,8 @@ buildSPT (Map.fromList -> m) =
     mkAdjList :: n -> (Int, Maybe n) -> (n, Map n [(n, Int)]) -> (n, Map n [(n, Int)])
     mkAdjList n (_, Nothing) (_, adjList) = (n, adjList) -- root
     mkAdjList n (d, Just p) (r, adjList) = (r, Map.insertWith (<>) p [(n, d)] adjList)
+
+-- All paths of the SPT
+sptPaths :: Tree n -> [[n]]
+sptPaths (Node n []) = [[n]]
+sptPaths (Node n ts) = map (n :) (concatMap sptPaths ts)

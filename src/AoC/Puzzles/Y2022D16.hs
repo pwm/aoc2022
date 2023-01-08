@@ -5,21 +5,45 @@ import AoC.Lib.Parser
 import AoC.Lib.Prelude
 import Control.Monad.Logic
 import Data.Map.Strict qualified as Map
+import Data.Set qualified as Set
 
 parse :: String -> Maybe AdjList
 parse = fmap Map.fromList . parseMaybe (sepEndBy1 lineP newline)
 
 solveA :: AdjList -> Int
-solveA adjList =
-  let (winner, iters, prunes) = solve 30 "AA" adjList
-      displayStats =
-        putStrLn (ppsw 200 (winner {paths = mempty}))
-          >> putStrLn ""
-          >> putStrLn ("iters/prunes: " <> show (iters, prunes))
-   in withIO displayStats winner.released
+solveA g = (solve 30 "AA" g).best.released
 
-solveB :: AdjList -> ()
-solveB _ = ()
+solveB :: AdjList -> Int
+solveB g =
+  let s26 = solve 26 "AA" g
+      -- assuming the graph is big enough that player 1 can't finish it
+      -- ie. does not work for the small sample graph
+      jointBests =
+        [ p1Best + (solve 26 "AA" (zeroValves g p1Valves)).best.released
+          | (p1Valves, p1Best) <-
+              Map.toList
+                . dedupValves
+                -- One player will score more or equal than the other
+                -- so here we say that player 1 will be that player
+                . Map.filter (>= s26.best.released `div` 2)
+                $ s26.solves
+        ]
+   in maximumOr 0 jointBests
+
+-- The idea is to remove opened sets when we also have a subset with a higher released value
+-- This way we leave more options for player 2 to explore possibly scoring higher
+dedupValves :: Map (Set String) Int -> Map (Set String) Int
+dedupValves solves =
+  foldr dedup mempty . sortOn (Set.size . fst) . Map.toList $ solves
+  where
+    dedup :: (Set String, Int) -> Map (Set String) Int -> Map (Set String) Int
+    dedup (vSet, released) m =
+      let isSuperWithLower s = Set.isSubsetOf vSet s && solves ! vSet >= solves ! s
+          supers = Set.filter isSuperWithLower (Map.keysSet solves)
+       in Map.insert vSet released (Map.withoutKeys m supers)
+
+zeroValves :: AdjList -> Set String -> AdjList
+zeroValves = Set.foldr (Map.adjust (first (const 0)))
 
 type AdjList = Map String (Int, [String])
 
@@ -28,7 +52,7 @@ data Valve = Valve
     flow :: Int,
     dist :: Int
   }
-  deriving stock (Show)
+  deriving stock (Show, Generic)
 
 type Paths = Map String [Valve]
 
@@ -36,59 +60,59 @@ data Candidate = Candidate
   { t :: Int,
     paths :: Paths,
     nexts :: [Valve],
-    opened :: [Valve],
+    opens :: [Valve],
     released :: Int
   }
-  deriving stock (Show)
+  deriving stock (Show, Generic)
 
 data Search = Search
   { tLimit :: Int,
     best :: Candidate,
-    iters :: Int,
-    prunes :: Int,
-    samplingFreq :: Int
+    solves :: Map (Set String) Int
   }
-  deriving stock (Show)
+  deriving stock (Show, Generic)
 
-solve :: Int -> String -> AdjList -> (Candidate, Int, Int)
-solve tLimit start adjList =
-  let candidate = initCandidate start adjList
-      search = Search tLimit candidate 0 0 1e4
-      result = execState (observeAllT (solver candidate)) search
-   in (result.best, result.iters, result.prunes)
+solve :: Int -> String -> AdjList -> Search
+solve tLimit start g =
+  let c = initCandidate start g
+      s = Search tLimit c mempty
+   in execState (observeAllT (solver c)) s
 
 initCandidate :: String -> AdjList -> Candidate
-initCandidate start adjList =
-  let paths0 = calcPaths start adjList
+initCandidate start g =
+  let paths0 = calcPaths start g
    in Candidate
         { t = 1,
-          paths = removeValve start paths0,
-          nexts = paths0 ! start,
-          opened = [],
+          paths = rmValve start paths0,
+          nexts = fromMaybe [] (paths0 !? start),
+          opens = [],
           released = 0
         }
 
+-- Compress the graph to working valves only + AA
+-- This also means we now need egde weights (ie. distances)
 calcPaths :: String -> AdjList -> Paths
-calcPaths start adjList =
-  let vids = [vid | (vid, (flow, _)) <- Map.toList adjList, flow > 0 || vid == start]
+calcPaths start g =
+  let vids = [vid | (vid, (flow, _)) <- Map.toList g, flow > 0 || vid == start]
    in foldr mkPaths mempty [(from, to) | from <- vids, to <- vids, from /= to]
   where
     mkPaths :: (String, String) -> Paths -> Paths
-    mkPaths (from, to) = Map.insertWith (<>) from [Valve to (fst (adjList ! to)) (calcDist from to)]
+    mkPaths (from, to) = Map.insertWith (<>) from [Valve to (fst (g ! to)) (calcDist from to)]
     calcDist :: String -> String -> Int
-    calcDist from to = length (bfsSP (snd . (adjList !)) to from) - 1
+    calcDist from to = length (bfsSP (snd . (g !)) to from) - 1
 
-solver :: Candidate -> LogicT (State Search) Candidate
+solver :: Candidate -> LogicT (State Search) ()
 solver c = do
   s <- get
-  when (s.iters > 0 && s.iters `mod` s.samplingFreq == 0) $
-    traceM ("ITERS " <> rpad 9 (show s.iters) <> " | PRUNES " <> rpad 9 (show s.prunes))
-  put s {iters = s.iters + 1}
   let tLeft = s.tLimit - c.t
   if
-      | c.t == s.tLimit, c.released > s.best.released -> put s {best = c} >> pure c
-      | c.t == s.tLimit -> empty
-      | releasedUpperBound tLeft c <= s.best.released -> put s {prunes = s.prunes + 1} >> empty
+      | c.t == s.tLimit -> do
+          #best .= if c.released > s.best.released then c else s.best
+          let opensSet = Set.fromList $ map (\v -> v.name) c.opens
+          #solves .= Map.insertWith max opensSet c.released s.solves
+      -- If we could open all remaining vales in the next round and would
+      -- still score lower than the current max then abandon this branch
+      | releasedUpperBound tLeft c <= s.best.released -> empty
       | null c.nexts -> solver $ tick tLeft c
       | otherwise -> do
           to <- choose c.nexts
@@ -99,31 +123,31 @@ solver c = do
 releasedUpperBound :: Int -> Candidate -> Int
 releasedUpperBound tLeft c =
   c.released
-    + tLeft * curFlow c.opened
+    + tLeft * curFlow c.opens
     + (tLeft - 1) * sum [v.flow | v <- c.nexts, v.dist < tLeft]
 
 tick :: Int -> Candidate -> Candidate
 tick dist c =
   c
     { t = c.t + dist,
-      released = c.released + dist * curFlow c.opened
+      released = c.released + dist * curFlow c.opens
     }
 
 openValve :: Valve -> Candidate -> Candidate
 openValve v c =
   c
     { t = c.t + 1,
-      paths = removeValve v.name c.paths,
+      paths = rmValve v.name c.paths,
       nexts = c.paths ! v.name,
-      opened = v : c.opened,
-      released = c.released + curFlow c.opened + v.flow
+      opens = v : c.opens,
+      released = c.released + curFlow c.opens + v.flow
     }
 
 curFlow :: [Valve] -> Int
 curFlow = sum . map (\v -> v.flow)
 
-removeValve :: String -> Paths -> Paths
-removeValve vid = Map.delete vid . Map.map (filter (\v -> v.name /= vid))
+rmValve :: String -> Paths -> Paths
+rmValve vid = Map.delete vid . Map.map (filter (\v -> v.name /= vid))
 
 lineP :: Parser (String, (Int, [String]))
 lineP = do
@@ -135,36 +159,3 @@ lineP = do
   where
     pluralStrP :: String -> Parser String
     pluralStrP s = strP (s <> "s") <|> strP s
-
---
-
-g0 :: AdjList
-g0 =
-  Map.fromList
-    [ ("AA", (0, ["DD", "II", "BB"])),
-      ("BB", (13, ["CC", "AA"])),
-      ("CC", (2, ["DD", "BB"])),
-      ("DD", (20, ["CC", "AA", "EE"])),
-      ("EE", (3, ["FF", "DD"])),
-      ("FF", (0, ["EE", "GG"])),
-      ("GG", (0, ["FF", "HH"])),
-      ("HH", (22, ["GG"])),
-      ("II", (0, ["AA", "JJ"])),
-      ("JJ", (21, ["II"]))
-    ]
-
-s00 :: String
-s00 =
-  unpack
-    [trimming|
-Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
-Valve BB has flow rate=13; tunnels lead to valves CC, AA
-Valve CC has flow rate=2; tunnels lead to valves DD, BB
-Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
-Valve EE has flow rate=3; tunnels lead to valves FF, DD
-Valve FF has flow rate=0; tunnels lead to valves EE, GG
-Valve GG has flow rate=0; tunnels lead to valves FF, HH
-Valve HH has flow rate=22; tunnel leads to valve GG
-Valve II has flow rate=0; tunnels lead to valves AA, JJ
-Valve JJ has flow rate=21; tunnel leads to valve II
-|]

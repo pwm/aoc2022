@@ -35,6 +35,8 @@ module AoC.Lib.Prelude
     loopTillM,
     headOr,
     lastOr,
+    minimumOr,
+    maximumOr,
     takeEnd,
     dropEnd,
     enumerate,
@@ -268,18 +270,16 @@ loopTillM p step x = do
   b <- p x
   if b then pure x else step x >>= loopTillM p step
 
--- headOr 0 [] -> 0
--- headOr 0 [1, 2, 3] -> 1
-headOr :: a -> [a] -> a
-headOr x [] = x
-headOr _ (a : _) = a
+headOr, lastOr :: a -> [a] -> a
+headOr = withDefault head
+lastOr = withDefault last
 
--- lastOr 0 [] -> 0
--- lastOr 0 [1, 2, 3] -> 3
-lastOr :: a -> [a] -> a
-lastOr x [] = x
-lastOr _ [x] = x
-lastOr x (_ : xs) = lastOr x xs
+minimumOr, maximumOr :: (Foldable t, Ord a) => a -> t a -> a
+minimumOr = withDefault minimum
+maximumOr = withDefault maximum
+
+withDefault :: (Foldable t) => (t a -> a) -> a -> t a -> a
+withDefault f def = fromMaybe def . (\t -> if null t then Nothing else Just (f t))
 
 -- takeEnd 1 [1..3] -> [1, 2]
 takeEnd :: Int -> [a] -> [a]

@@ -13,7 +13,7 @@ solveA :: AdjList -> Int
 solveA adjList =
   let (winner, iters, prunes) = solve 30 "AA" adjList
       displayStats =
-        putStrLn (ppsw 200 (winner & #paths .~ mempty))
+        putStrLn (ppsw 200 (winner {paths = mempty}))
           >> putStrLn ""
           >> putStrLn ("iters/prunes: " <> show (iters, prunes))
    in withIO displayStats winner.released
@@ -28,7 +28,7 @@ data Valve = Valve
     flow :: Int,
     dist :: Int
   }
-  deriving stock (Show, Generic)
+  deriving stock (Show)
 
 type Paths = Map String [Valve]
 
@@ -39,7 +39,7 @@ data Candidate = Candidate
     opened :: [Valve],
     released :: Int
   }
-  deriving stock (Show, Generic)
+  deriving stock (Show)
 
 data Search = Search
   { tLimit :: Int,
@@ -48,7 +48,7 @@ data Search = Search
     prunes :: Int,
     samplingFreq :: Int
   }
-  deriving stock (Show, Generic)
+  deriving stock (Show)
 
 solve :: Int -> String -> AdjList -> (Candidate, Int, Int)
 solve tLimit start adjList =
@@ -83,12 +83,12 @@ solver c = do
   s <- get
   when (s.iters > 0 && s.iters `mod` s.samplingFreq == 0) $
     traceM ("ITERS " <> rpad 9 (show s.iters) <> " | PRUNES " <> rpad 9 (show s.prunes))
-  #iters += 1
+  put s {iters = s.iters + 1}
   let tLeft = s.tLimit - c.t
   if
-      | c.t == s.tLimit, c.released > s.best.released -> #best .= c >> pure c
+      | c.t == s.tLimit, c.released > s.best.released -> put s {best = c} >> pure c
       | c.t == s.tLimit -> empty
-      | releasedUpperBound tLeft c <= s.best.released -> #prunes += 1 >> empty
+      | releasedUpperBound tLeft c <= s.best.released -> put s {prunes = s.prunes + 1} >> empty
       | null c.nexts -> solver $ tick tLeft c
       | otherwise -> do
           to <- choose c.nexts
@@ -105,23 +105,25 @@ releasedUpperBound tLeft c =
 tick :: Int -> Candidate -> Candidate
 tick dist c =
   c
-    & #t +~ dist
-    & #released +~ dist * curFlow c.opened
+    { t = c.t + dist,
+      released = c.released + dist * curFlow c.opened
+    }
 
 openValve :: Valve -> Candidate -> Candidate
 openValve v c =
   c
-    & #t +~ 1
-    & #paths %~ removeValve v.name
-    & #nexts .~ c.paths ! v.name
-    & #opened %~ (v :)
-    & #released +~ curFlow c.opened + v.flow
+    { t = c.t + 1,
+      paths = removeValve v.name c.paths,
+      nexts = c.paths ! v.name,
+      opened = v : c.opened,
+      released = c.released + curFlow c.opened + v.flow
+    }
 
 curFlow :: [Valve] -> Int
-curFlow = sum . map (view #flow)
+curFlow = sum . map (\v -> v.flow)
 
 removeValve :: String -> Paths -> Paths
-removeValve vid = Map.delete vid . Map.map (filter ((/= vid) . view #name))
+removeValve vid = Map.delete vid . Map.map (filter (\v -> v.name /= vid))
 
 lineP :: Parser (String, (Int, [String]))
 lineP = do

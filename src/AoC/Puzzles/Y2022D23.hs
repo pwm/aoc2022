@@ -21,7 +21,7 @@ turn1 :: Set Pos -> State (Int, [Dir8]) (Set Pos)
 turn1 s = do
   (i, dirs) <- get
   let s' = move s . filterCollisions . proposedMoves dirs . canMove $ s
-  put (i + 1, rotate dirs)
+  put (i + 1, rotate1 dirs)
   pure s'
 
 move :: Set Pos -> [(Pos, Pos)] -> Set Pos

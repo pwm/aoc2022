@@ -36,5 +36,4 @@ rtsStats :: IO ()
 rtsStats = do
   stats <- getRTSStats
   let cpuTime = stats.cpu_ns `div` 1e6 -- milliseconds
-      memUse = stats.max_mem_in_use_bytes `div` 1e6 -- megabytes
-  putStrLn $ "Time: " <> show cpuTime <> "ms, " <> "Mem: " <> show memUse <> "MB"
+  putStrLn $ "Runtime: " <> show cpuTime <> "ms"

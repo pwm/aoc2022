@@ -4,6 +4,7 @@ module AoC.Lib.Prelude
   ( module X,
     module List,
     module Map,
+    module IntMap,
     module Seq,
     module Set,
     module T,
@@ -55,7 +56,7 @@ module AoC.Lib.Prelude
     slicesOf,
     lookups,
     setLookups,
-    rotate,
+    rotate1,
     compose,
     composeM,
     times,
@@ -78,11 +79,12 @@ import AoC.Core.Date
 import AoC.Core.File
 import Control.Applicative as X (Alternative (empty, (<|>)), liftA2, liftA3)
 import Control.Arrow as X ((&&&))
-import Control.Lens as X (Each (..), element, filtered, filteredBy, folded, maximumByOf, maximumOf, minimumByOf, minimumOf, over, preview, review, set, sumOf, toListOf, use, uses, view, (%=), (%~), (*~), (+=), (+~), (-~), (.=), (.~), (^.), (^..), (^?), _1, _2, _3, _4, _5, _Just, _Nothing)
+import Control.Lens as X (Each (..), element, filtered, filteredBy, folded, maximumByOf, maximumOf, minimumByOf, minimumOf, over, preview, review, set, sumOf, toListOf, use, uses, view, (%=), (%~), (*~), (+=), (+~), (-~), (.=), (.~), (<>~), (^.), (^..), (^?), _1, _2, _3, _4, _5, _Just, _Nothing)
 import Control.Monad.Logic (MonadLogic, interleave)
 import Control.Monad.State.Strict as X
 import Data.Bifunctor as X
 import Data.Bitraversable as X
+import Data.Bits as X
 import Data.Char as X (chr, ord)
 import Data.Containers.ListUtils as X
 import Data.Either as X
@@ -91,6 +93,7 @@ import Data.Function as X
 import Data.Functor as X
 import Data.Functor.Identity as X (Identity (..))
 import Data.Generics.Labels as X ()
+import Data.IntMap.Strict as IntMap (IntMap)
 import Data.Kind as X
 import Data.List as List
 import Data.List.Split as X hiding (sepBy)
@@ -351,8 +354,8 @@ setLookups :: (Ord v) => Set v -> [v] -> [v]
 setLookups s = mapMaybe $
   \v -> if Set.member v s then Just v else Nothing
 
-rotate :: [a] -> [a]
-rotate l = drop 1 l <> take 1 l
+rotate1 :: [a] -> [a]
+rotate1 l = drop 1 l <> take 1 l
 
 substring :: Int -> Int -> String -> String
 substring start end = take (end - start) . drop start

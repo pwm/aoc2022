@@ -4,4 +4,6 @@
 cabal.project.local
 dist-newstyle
 result*
+aoc.svg*
+aoc.prof*
 *~

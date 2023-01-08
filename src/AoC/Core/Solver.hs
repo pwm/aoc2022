@@ -8,7 +8,8 @@ where
 import AoC.Core.Date
 import AoC.Core.File
 import Data.Map.Strict (Map, (!?))
-import System.Exit (exitFailure, exitSuccess)
+import GHC.Stats
+import System.Exit (exitFailure)
 import Prelude
 
 type Solutions = Map (Int, Int) (Date -> IO ())
@@ -29,4 +30,11 @@ mkSolverFor parse solveA solveB date = do
   inputFile <- readInput date
   case parse inputFile of
     Nothing -> print ("Cannot parse " <> inputName date) >> exitFailure
-    Just input -> print (solveA input, solveB input) >> exitSuccess
+    Just input -> print (solveA input, solveB input) >> rtsStats
+
+rtsStats :: IO ()
+rtsStats = do
+  stats <- getRTSStats
+  let cpuTime = stats.cpu_ns `div` 1e6 -- milliseconds
+      memUse = stats.max_mem_in_use_bytes `div` 1e6 -- megabytes
+  putStrLn $ "Time: " <> show cpuTime <> "ms, " <> "Mem: " <> show memUse <> "MB"

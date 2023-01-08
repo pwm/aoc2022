@@ -9,6 +9,10 @@ package *
     -fwrite-ide-info
     -hiedir=.hie
 
+-- Set to True to enable profiled builds
+profiling: False
+profiling-detail: all-functions
+
 -- tell ghc to write the package environment file
 write-ghc-environment-files: always
 

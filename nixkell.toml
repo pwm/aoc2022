@@ -11,9 +11,12 @@ ghc = "9.2.4"
 # Put tools here that you want compiled with your GHC
 haskell_tools = [
   "haskell-language-server",
+  "haskellPackages.ghc-prof-flamegraph",
   "haskellPackages.hlint",
   "haskellPackages.hpack_0_35_0",
   "haskellPackages.ormolu_0_5_0_1",
+  "haskellPackages.profiterole",
+  "haskellPackages.profiteur",
 ]
 
 tools = [

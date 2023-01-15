@@ -5,15 +5,14 @@ import AoC.Lib.Prelude hiding (id)
 import Control.Monad.Logic
 import Data.Set qualified as Set
 
-parse :: String -> Maybe [Blueprint]
-parse = parseMaybe (sepEndBy1 blueprintP newline)
+parse :: String -> Maybe [BP]
+parse = parseMaybe (sepEndBy1 bpP newline)
 
--- 1294 (Runtime: 690420ms)
-solveA :: [Blueprint] -> Int
-solveA = sum . map ((\s -> s.blueprint.id * s.best.minerals.geode) . solve 24)
+solveA :: [BP] -> Int
+solveA = sum . map ((\s -> s.bp.id * s.best.minerals.geode) . solve 24)
 
-solveB :: [Blueprint] -> ()
-solveB _ = ()
+solveB :: [BP] -> Int
+solveB = product . map ((\s -> s.best.minerals.geode) . solve 32) . take 3
 
 data Candidate = Candidate
   { t :: Int,
@@ -24,7 +23,7 @@ data Candidate = Candidate
 
 data Search = Search
   { tLimit :: Int,
-    blueprint :: Blueprint,
+    bp :: BP,
     best :: Candidate,
     seen :: Set Candidate,
     iters :: Int,
@@ -33,7 +32,7 @@ data Search = Search
   }
   deriving stock (Show, Eq, Generic)
 
-solve :: Int -> Blueprint -> Search
+solve :: Int -> BP -> Search
 solve tLimit bp =
   let c = initCandidate
       s = initSearch tLimit bp
@@ -47,17 +46,24 @@ initCandidate =
       minerals = mempty
     }
 
-initSearch :: Int -> Blueprint -> Search
-initSearch tLimit blueprint =
+initSearch :: Int -> BP -> Search
+initSearch tLimit bp =
   Search
     { tLimit = tLimit,
-      blueprint,
+      bp = bp,
       best = initCandidate,
       seen = mempty,
       iters = 0,
       prunes = 0,
       samplingFreq = 1e6
     }
+
+{-
+TODO:
+ - throw away excess minerals/robot so that the seen set in much smaller and gets hit more often
+ - batch time instead of 1-by-1
+ - A state at time T can never be more valuable if the projected value for any kind of material is less than/equal to the best
+-}
 
 solver :: Candidate -> LogicT (State Search) ()
 solver c = do
@@ -67,41 +73,59 @@ solver c = do
   #iters += 1
   if
       | s.iters == 1e8 -> error "Too many iterations, aborting ..."
-      | c.t > s.tLimit -> error "Turn overflow ..."
-      | c.t == s.tLimit, c.minerals.geode > s.best.minerals.geode -> #best .= c
-      | c.t == s.tLimit -> empty
+      | c.t >= s.tLimit -> error "Turn overflow ..."
+      -- no need to run the last tree level, can check in the penultimate round for best
+      | c.t == s.tLimit - 1,
+        c.minerals.geode + (mine c.robots).geode > s.best.minerals.geode ->
+          #best .= (c & #minerals <>~ mine c.robots)
+      | c.t == s.tLimit - 1 -> empty
+      -- if we could build geode robots in all remaining turns and still have less or equal
+      | maxGeodeBound s.tLimit c <= s.best.robots.rGeode -> #prunes += 1 >> empty
       | Set.member c s.seen -> #prunes += 1 >> empty
       | otherwise -> do
           #seen %= Set.insert c
-          (newRobots, buildCost) <- choose $ build s.blueprint c.minerals
+          (newRobots, buildCost) <- choose $ build s.bp c
           solver $
             c
               & #t +~ 1
               & #minerals <>~ (mine c.robots <> buildCost)
               & #robots <>~ newRobots
 
+maxGeodeBound :: Int -> Candidate -> Int
+maxGeodeBound tLimit c = c.robots.rGeode + tLimit - c.t
+
 mine :: Robots -> Minerals
 mine rs = Minerals rs.rOre rs.rClay rs.rObsidian rs.rGeode
 
-build :: Blueprint -> Minerals -> [(Robots, Minerals)]
-build bp ms = mapMaybe (\builder -> builder bp ms) [bGeode, bObsidian, bClay, bOre, bNone]
+{-
+- don't build more ore robot than the ore cost of the most expensive robot
+  note: doing the same rule for clay/obsidian seems to not matter much
+- if we can build all then always build something
+-}
+build :: BP -> Candidate -> [(Robots, Minerals)]
+build bp c
+  | Just (rs, cost) <- mkGeode bp c.minerals = [(rs, cost)] -- unsafe assumption?
+  | c.robots.rOre >= bp.maxOre = addNoneIf ((/= 2) . length) $ tryBuildAll [mkClay, mkObsidian]
+  | otherwise = addNoneIf ((/= 3) . length) $ tryBuildAll [mkOre, mkClay, mkObsidian]
+  where
+    tryBuildAll = mapMaybe (\builder -> builder bp c.minerals)
+    addNoneIf p xs = if p xs then xs <> [(mempty, mempty)] else xs
 
-bGeode, bObsidian, bClay, bOre, bNone :: Blueprint -> Minerals -> Maybe (Robots, Minerals)
-bGeode (view #cGeode -> CostGeode ore obsidian) ms
+mkGeode, mkObsidian, mkClay, mkOre :: BP -> Minerals -> Maybe (Robots, Minerals)
+mkGeode (view #cGeode -> CostGeode ore obsidian) ms
   | ms.ore >= ore && ms.obsidian >= obsidian =
       Just (mempty & #rGeode +~ 1, mempty & #ore -~ ore & #obsidian -~ obsidian)
   | otherwise = Nothing
-bObsidian (view #cObsidian -> CostObsidian ore clay) ms
+mkObsidian (view #cObsidian -> CostObsidian ore clay) ms
   | ms.ore >= ore && ms.clay >= clay =
       Just (mempty & #rObsidian +~ 1, mempty & #ore -~ ore & #clay -~ clay)
   | otherwise = Nothing
-bClay (view #cClay -> CostClay ore) ms
+mkClay (view #cClay -> CostClay ore) ms
   | ms.ore >= ore = Just (mempty & #rClay +~ 1, mempty & #ore -~ ore)
   | otherwise = Nothing
-bOre (view #cOre -> CostOre ore) ms
+mkOre (view #cOre -> CostOre ore) ms
   | ms.ore >= ore = Just (mempty & #rOre +~ 1, mempty & #ore -~ ore)
   | otherwise = Nothing
-bNone _ _ = Just (mempty, mempty)
 
 data Robots = Robots
   {rOre :: Int, rClay :: Int, rObsidian :: Int, rGeode :: Int}
@@ -127,12 +151,13 @@ instance Monoid Minerals where
   mempty :: Minerals
   mempty = Minerals 0 0 0 0
 
-data Blueprint = Blueprint
+data BP = BP
   { id :: Int,
     cOre :: CostOre,
     cClay :: CostClay,
     cObsidian :: CostObsidian,
-    cGeode :: CostGeode
+    cGeode :: CostGeode,
+    maxOre :: Int
   }
   deriving stock (Show, Eq, Ord, Generic)
 
@@ -148,8 +173,8 @@ data CostObsidian = CostObsidian Int Int
 data CostGeode = CostGeode Int Int
   deriving stock (Show, Eq, Ord, Generic)
 
-blueprintP :: Parser Blueprint
-blueprintP = do
+bpP :: Parser BP
+bpP = do
   id <- strP "Blueprint" *> intP <* strP ":"
   oreOre <- strP "Each ore robot costs" *> intP <* strP "ore."
   clayOre <- strP "Each clay robot costs" *> intP <* strP "ore."
@@ -158,24 +183,11 @@ blueprintP = do
   geodeOre <- strP "Each geode robot costs" *> intP <* strP "ore and"
   geodeObsidian <- intP <* strP "obsidian."
   pure $
-    Blueprint
+    BP
       { id,
         cOre = CostOre oreOre,
         cClay = CostClay clayOre,
         cObsidian = CostObsidian obsidianOre obsidianClay,
-        cGeode = CostGeode geodeOre geodeObsidian
+        cGeode = CostGeode geodeOre geodeObsidian,
+        maxOre = maximum [oreOre, clayOre, obsidianOre, geodeOre]
       }
-
---
-
-s0 :: String
-s0 =
-  unpack
-    [trimming|
-Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
-Blueprint 2: Each ore robot costs 2 ore. Each clay robot costs 3 ore. Each obsidian robot costs 3 ore and 8 clay. Each geode robot costs 3 ore and 12 obsidian.
-|]
-
-bp0, bp1 :: Blueprint
-bp0 = Blueprint {id = 1, cOre = CostOre 4, cClay = CostClay 2, cObsidian = CostObsidian 3 14, cGeode = CostGeode 2 7}
-bp1 = Blueprint {id = 2, cOre = CostOre 2, cClay = CostClay 3, cObsidian = CostObsidian 3 8, cGeode = CostGeode 3 12}
